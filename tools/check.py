@@ -91,6 +91,7 @@ def make_vow(page, title, proof="note", when=None, stake=None, witness="Sam"):
     page.goto(BASE + "#new")
     page.wait_for_selector("#f-title")
     page.fill("#f-title", title)
+    page.evaluate("document.getElementById('opts') && (document.getElementById('opts').open = true)")
     if when:
         page.click(f"#once-box label:has-text('{when}')")
     if stake:
@@ -176,6 +177,8 @@ with sync_playwright() as pw:
     page.clock.fast_forward(11 * MIN)
     more(page, v1, "pass")
     answer(page, "Flu, doctor said rest")
+    page.wait_for_timeout(200)
+    close_dialog(page)
     first = state(page)["vows"][0]["occ"][0]["status"] == "excused"
     more(page, v2, "pass")
     page.clock.run_for(500)

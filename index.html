@@ -49,6 +49,13 @@
 .dot.excused { background: var(--warn); }
 .pill.warn { background: color-mix(in srgb, var(--warn) 18%, var(--card)); color: var(--warn); }
 .story { font: 600 17px/1.5 var(--serif); }
+.heat { display: grid; grid-template-rows: repeat(7, 14px); grid-auto-flow: column; grid-auto-columns: 14px; gap: 4px; }
+.heat span { border-radius: 3px; background: var(--soft); }
+.heat .kept { background: var(--kept); }
+.heat .broken { background: var(--seal); }
+.heat .excused { background: var(--warn); }
+.heat .today { outline: 2px solid var(--ink); outline-offset: -1px; }
+.share-link { font-size: 12px; min-height: 64px; }
 html, body { margin: 0; }
 body {
   background: var(--bg);
@@ -377,7 +384,7 @@ function tick() {
         v.occ.push(o);
         changed = true;
       }
-      if (o.due > t) {
+      if (o.due + (o.claim ? DAY : 0) > t) {
         break;
       }
       o.status = "broken";
@@ -406,17 +413,51 @@ function tick() {
 /* ---------- witness codes ---------- */
 const b64e = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const b64d = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)));
-async function witnessCode(key, day) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${key}:${day}`));
-  const n = new DataView(buf).getUint32(0) % 1e6;
-  return String(n).padStart(6, "0");
+const ECDSA = { name: "ECDSA", namedCurve: "P-256" };
+const bytesB64u = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const b64uBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+const appUrl = (hash) => `${location.origin}${location.pathname}#${hash}`;
+const proofMessage = (id, day) => new TextEncoder().encode(`vow:${id}:${day}`);
+
+// The witness's private key is created and kept on the witness's device only.
+async function newWitnessKeys() {
+  const pair = await crypto.subtle.generateKey(ECDSA, true, ["sign", "verify"]);
+  const priv = await crypto.subtle.exportKey("jwk", pair.privateKey);
+  const pub = await crypto.subtle.exportKey("jwk", pair.publicKey);
+  return { priv, pub: { x: pub.x, y: pub.y } };
 }
-function witnessLink(v) {
-  const payload = {
-    t: v.title, k: v.witnessKey, n: S.settings.name || "", kind: v.kind, to: v.to, s: money(v.stake),
+async function signProof(priv, id, day) {
+  const key = await crypto.subtle.importKey("jwk", priv, ECDSA, false, ["sign"]);
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, proofMessage(id, day));
+  return bytesB64u(new Uint8Array(sig));
+}
+async function verifyProof(pub, id, day, sig) {
+  try {
+    const key = await crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: pub.x, y: pub.y, ext: true }, ECDSA, false, ["verify"]);
+    return await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, b64uBytes(sig), proofMessage(id, day));
+  } catch (err) {
+    return false;
+  }
+}
+function invitePayload(v) {
+  return {
+    id: v.id, t: v.title, n: S.settings.name || "", kind: v.kind, to: v.to, s: money(v.stake),
     due: v.kind === "once" ? v.occ[0].due : null, days: v.days || null, time: v.time || null,
   };
-  return `${location.origin}${location.pathname}#w=${b64e(JSON.stringify(payload))}`;
+}
+function witnessLink(v) {
+  return appUrl(`invite=${b64e(JSON.stringify(invitePayload(v)))}`);
+}
+const WKEY = "vow.witnessing";
+function loadWitnessing() {
+  try {
+    return JSON.parse(localStorage.getItem(WKEY) || "[]");
+  } catch (err) {
+    return [];
+  }
+}
+function saveWitnessing(list) {
+  localStorage.setItem(WKEY, JSON.stringify(list));
 }
 
 /* ---------- helpers ---------- */
@@ -564,7 +605,9 @@ function vowCard(v) {
       <span class="pill stake">${money(v.stake)} → ${esc(v.to)}</span>
       <span class="pill">Proof: ${proofLabel[v.proof]}${v.proof === "timer" ? ` ${v.timerMin} min` : ""}</span>
       ${v.witness ? `<span class="pill">Witness: ${esc(v.witness)}</span>` : ""}
-      ${v.witness && !v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}" style="border:0;cursor:pointer">Not sent to ${esc(v.witness)} yet: send</button>` : ""}
+      ${v.witnessPub ? `<span class="pill kept">${esc(v.witness)} accepted</span>`
+        : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}" style="border:0;cursor:pointer">Waiting for ${esc(v.witness)} to accept</button>`
+        : `<button class="pill warn" data-act="witness" data-id="${v.id}" style="border:0;cursor:pointer">Send invite to ${esc(v.witness)}</button>`}
       ${v.escalate ? `<span class="pill">×1.5 on miss</span>` : ""}
     </div>
     ${v.plan ? `<p class="small" style="margin:0"><b>Plan:</b> ${esc(v.plan)}</p>` : ""}
@@ -573,7 +616,9 @@ function vowCard(v) {
       <div><div class="small muted">${notOpen ? "Check-in opens in" : "Time left"}</div>
         <div class="countdown ${o.due - t < 3 * HOUR ? "soon" : ""}" data-left="${notOpen ? o.opens : o.due}">${fmtLeft((notOpen ? o.opens : o.due) - t)}</div></div>
       <span class="spacer"></span>
-      <button class="btn primary" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>
+      ${o.claim
+        ? `<span class="pill warn">Waiting for ${esc(v.witness)} to confirm</span>`
+        : `<button class="btn primary" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>`}
     </div>` : ""}
     ${pending}
     ${freeEdit(v) ? `<p class="small muted row" style="margin:0">Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>. <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
@@ -613,7 +658,7 @@ function viewHome() {
   const active = S.vows.filter((v) => v.status === "active");
   const st = stats();
   if (!S.vows.length) {
-    return `<section class="empty stack">
+    return `${witnessSection()}<section class="empty stack">
       <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#seal"/></svg>
       <h1>Keep the promises you make to yourself.</h1>
       <p class="muted">Put money on it. Name a witness. If you don't show proof by the deadline, you pay your cause, not us.</p>
@@ -631,6 +676,7 @@ function viewHome() {
         <div class="stat"><b>${money(st.saved)}</b><span>stakes kept safe</span></div>
       </section>
       ${active.length ? active.map(vowCard).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
+      ${witnessSection()}
     </div>`;
 }
 
@@ -655,8 +701,13 @@ function viewNew() {
   <form id="newf" class="card stack" novalidate>
     <label class="field"><span>I will…</span>
       <input type="text" id="f-title" maxlength="80" placeholder="go to the gym for 45 minutes" required autocomplete="off"></label>
+    <label class="field"><span>Witness</span>
+      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required></label>
+    <p class="hint" style="margin-top:-6px">They accept on their phone. Only they can confirm your proof.</p>
     <div class="chips" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
 
+    <details class="more" id="opts"><summary id="opts-sum">Tonight · $10 to a charity · photo proof · change</summary>
+    <div class="stack" style="margin-top:8px">
     <fieldset><legend class="legend">How often</legend>
       <div class="chips">
         <label><input type="radio" name="kind" value="once" checked><span>Once</span></label>
@@ -708,10 +759,9 @@ function viewNew() {
       <label class="field" id="timer-box" hidden style="margin-top:8px"><span class="small">Minutes of focus</span>
         <input type="number" id="f-timer" min="1" max="240" value="25"></label>
     </fieldset>
+    </div>
+    </details>
 
-    <label class="field"><span>Witness</span>
-      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required></label>
-    <p class="hint" style="margin-top:-6px">They get a link with your vow. No witness, no vow.</p>
 
     <details class="more"><summary>Fine-tune (optional)</summary>
       <div class="stack">
@@ -730,6 +780,33 @@ function viewNew() {
   </form>`;
 }
 
+function heatmap() {
+  const byDay = {};
+  for (const v of S.vows) {
+    for (const o of v.occ) {
+      if (["kept", "broken", "excused"].includes(o.status)) {
+        const k = dateKey(o.resolvedAt || o.due);
+        const rank = { excused: 1, kept: 2, broken: 3 };
+        if (!byDay[k] || rank[o.status] > rank[byDay[k]]) {
+          byDay[k] = o.status;
+        }
+      }
+    }
+  }
+  const today = new Date(now());
+  today.setHours(12, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - start.getDay() - 7 * 11);
+  const cells = [];
+  for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+    const k = dateKey(d.getTime());
+    cells.push(`<span class="${byDay[k] || ""} ${k === dateKey(today.getTime()) ? "today" : ""}" title="${k}${byDay[k] ? ": " + byDay[k] : ""}"></span>`);
+  }
+  return `<section class="card stack"><h2>Last 12 weeks</h2>
+    <div class="heat" role="img" aria-label="Calendar of kept, broken and excused days over the last 12 weeks">${cells.join("")}</div>
+    <p class="small muted">Green kept · red broken · amber excused</p></section>`;
+}
+
 function viewHistory() {
   const items = S.vows.flatMap((v) => v.occ.filter((o) => o.status !== "open").map((o) => ({ v, o })))
     .sort((a, b) => (b.o.resolvedAt || b.o.due) - (a.o.resolvedAt || a.o.due));
@@ -743,6 +820,7 @@ function viewHistory() {
   return `<div class="hero"><h1>History</h1></div>
   <div class="stack">
     <p class="story">${story}</p>
+    ${heatmap()}
     <section class="stats" aria-label="Totals">
       <div class="stat"><b>${st.kept}</b><span>kept</span></div>
       <div class="stat"><b>${st.broken}</b><span>broken</span></div>
@@ -789,36 +867,76 @@ function viewSettings() {
       <h2>How Vow works</h2>
       <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
       <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
-      <p><b>On your honor.</b> Vow can't stop you from opening your own witness link or lying in a note. It makes cheating deliberate, not easy.</p>
+      <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are only claims: a check-in counts when your witness signs it. Before they accept, proof is on your honor.</p>
       <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
       <p class="small muted">Vow is free and has no subscription. It runs offline once loaded.</p>
     </section>
   </div>`;
 }
 
-function viewWitness(payload) {
-  const who = payload.n || "Your friend";
-  const sched = payload.kind === "once" ? `by ${fmtWhen(payload.due)}` : `${payload.days.length === 7 ? "every day" : payload.days.map((d) => DAY_NAMES[d]).join(", ")} by ${payload.time}`;
-  const day = payload.kind === "once" ? dateKey(payload.due) : dateKey(now());
-  return `<div class="hero"><h1>You're a witness</h1></div>
+function witnessSchedule(p) {
+  return p.kind === "once" ? `by ${fmtWhen(p.due)}` : `${p.days.length === 7 ? "every day" : p.days.map((d) => DAY_NAMES[d]).join(", ")} by ${p.time}`;
+}
+function viewInvite(p) {
+  const who = p.n || "Your friend";
+  const mine = loadWitnessing().find((w) => w.id === p.id);
+  return `<div class="hero"><h1>Be a witness</h1></div>
   <section class="card stack">
-    <p><b>${esc(who)}</b> vowed to <b>${esc(payload.t)}</b>, ${esc(sched)}.</p>
-    <p>If they break it, they owe <b>${esc(payload.s)}</b> to ${esc(payload.to)}. Your job: ask them about it and make sure they pay.</p>
-    <label class="field"><span>Day you checked</span><input type="date" id="w-day" value="${day}"></label>
-    <button class="btn primary block" id="w-saw">I saw proof they did it</button>
-    <div id="w-reveal" hidden class="stack">
-      <p class="muted small">Give them this code. It only works for the day above.</p>
-      <div class="code" id="w-code" aria-live="polite">······</div>
+    <p><b>${esc(who)}</b> vowed to <b>${esc(p.t)}</b>, ${esc(witnessSchedule(p))}.</p>
+    <p>If they break it, they owe <b>${esc(p.s)}</b> to ${esc(p.to)}. Your job: check their proof, confirm it, and make sure they pay if they miss.</p>
+    ${mine ? `<p class="pill kept">You're already their witness</p>` : `<button class="btn primary block" id="w-accept">I'll be the witness</button>`}
+    <div id="w-after" ${mine ? "" : "hidden"} class="stack">
+      <p class="small">Send this acceptance back. Only your phone can confirm their proof from now on.</p>
+      <textarea class="share-link" id="share-link" aria-label="Acceptance link" readonly>${mine ? esc(appUrl(`accept=${b64e(JSON.stringify({ id: mine.id, x: mine.pub.x, y: mine.pub.y }))}`)) : ""}</textarea>
+      <button class="btn block" id="w-send">Send acceptance</button>
+      <p class="small muted">Later, open Vow and tap <b>Confirm proof</b> on the day you've seen it.</p>
     </div>
-    <p class="small muted">This page doesn't save anything about you. <a href="#">Make your own vow</a>.</p>
+    <p class="small muted"><a href="#">Open Vow</a></p>
   </section>`;
+}
+function witnessSection() {
+  const list = loadWitnessing();
+  if (!list.length) {
+    return "";
+  }
+  return `<section class="card stack" aria-labelledby="wit-h"><h2 id="wit-h">You're a witness for</h2>
+    <ul class="list">${list.map((w) => `<li><div style="flex:1"><b>${esc(w.n || "A friend")}</b>: ${esc(w.t)}<br><span class="small muted">${esc(witnessSchedule(w))} · ${esc(w.s)} to ${esc(w.to)}</span></div>
+      <button class="btn" data-confirm="${w.id}">Confirm proof</button></li>`).join("")}</ul></section>`;
+}
+async function confirmProof(id) {
+  const w = loadWitnessing().find((x) => x.id === id);
+  if (!w) {
+    return;
+  }
+  const day = w.kind === "once" ? dateKey(w.due) : dateKey(now());
+  openDialog(`<form class="stack" id="cf">
+    <h2 id="dlg-title">Confirm proof</h2>
+    <p class="muted small">Only confirm if you've actually seen proof that ${esc(w.n || "they")} did "${esc(w.t)}".</p>
+    <label class="field"><span>Day</span><input type="date" id="cf-day" value="${day}"></label>
+    <div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary">I saw it, sign</button></div>
+    <textarea class="share-link" id="cf-link" aria-label="Confirmation link" readonly hidden></textarea>
+  </form>`, (d) => {
+    $("#cf", d).addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const chosen = $("#cf-day", d).value;
+      const sig = await signProof(w.priv, w.id, chosen);
+      const link = appUrl(`ok=${b64e(JSON.stringify({ id: w.id, d: chosen, sig }))}`);
+      const box = $("#cf-link", d);
+      box.value = link;
+      box.hidden = false;
+      shareText(`I saw your proof for "${w.t}" (${chosen}). Open this to check in: ${link}`);
+    });
+  });
 }
 
 /* ---------- render + events ---------- */
 function route() {
   const h = location.hash;
-  if (h.startsWith("#w=")) {
-    return "witness";
+  if (h.startsWith("#invite=")) {
+    return "invite";
+  }
+  if (h.startsWith("#accept=") || h.startsWith("#ok=")) {
+    return "inbound";
   }
   return { "#new": "new", "#history": "history", "#settings": "settings" }[h] || "home";
 }
@@ -840,24 +958,35 @@ function render() {
       a.removeAttribute("aria-current");
     }
   });
-  if (r === "witness") {
+  if (r === "invite" || r === "inbound") {
     let payload;
     try {
-      payload = JSON.parse(b64d(location.hash.slice(3)));
+      payload = JSON.parse(b64d(location.hash.slice(location.hash.indexOf("=") + 1)));
     } catch (err) {
       view.innerHTML = `<div class="hero"><h1>That link is broken</h1><p><a href="#">Go to Vow</a></p></div>`;
       return;
     }
-    view.innerHTML = viewWitness(payload);
-    const update = async () => {
-      $("#w-code").textContent = await witnessCode(payload.k, $("#w-day").value);
-    };
-    $("#w-day").addEventListener("change", update);
-    $("#w-saw").addEventListener("click", () => {
-      $("#w-reveal").hidden = false;
-      $("#w-saw").hidden = true;
-      update();
-    });
+    if (r === "inbound") {
+      view.innerHTML = `<div class="hero"><h1>Checking…</h1></div>`;
+      handleInbound(location.hash.startsWith("#accept=") ? "accept" : "ok", payload);
+      return;
+    }
+    view.innerHTML = viewInvite(payload);
+    const accept = $("#w-accept");
+    if (accept) {
+      accept.addEventListener("click", async () => {
+        const keys = await newWitnessKeys();
+        const list = loadWitnessing().filter((w) => w.id !== payload.id);
+        list.push({ ...payload, priv: keys.priv, pub: keys.pub, acceptedAt: now() });
+        saveWitnessing(list);
+        render();
+        toast("You're the witness. Send the acceptance back.");
+      });
+    }
+    const send = $("#w-send");
+    if (send) {
+      send.addEventListener("click", () => shareText(`I'll be your witness for "${payload.t}". Open this: ${$("#share-link").value}`));
+    }
   } else {
     view.innerHTML = { home: viewHome, new: viewNew, history: viewHistory, settings: viewSettings }[r]();
     if (r === "new") {
@@ -873,6 +1002,46 @@ function render() {
   lastRoute = r;
 }
 
+async function handleInbound(kind, p) {
+  const v = S.vows.find((x) => x.id === p.id);
+  const done = (msg) => {
+    location.hash = "";
+    render();
+    toast(msg);
+  };
+  if (!v) {
+    done("That link belongs to a vow that isn't on this device.");
+    return;
+  }
+  if (kind === "accept") {
+    v.witnessPub = { x: p.x, y: p.y };
+    v.sentAt = v.sentAt || now();
+    save();
+    done(`${v.witness || "Your witness"} accepted. Only they can confirm your proof now.`);
+    return;
+  }
+  if (!v.witnessPub) {
+    done("Your witness hasn't accepted yet, so this can't be checked.");
+    return;
+  }
+  const ok = await verifyProof(v.witnessPub, v.id, p.d, p.sig);
+  const o = openOcc(v);
+  if (!ok) {
+    done("That confirmation isn't signed by your witness.");
+    return;
+  }
+  if (!o || dateKey(o.due) !== p.d || o.opens > now() || (o.due < now() && !o.claim)) {
+    done("Confirmed, but it doesn't match an open check-in for that day.");
+    return;
+  }
+  o.status = "kept";
+  o.resolvedAt = now();
+  o.proof = { type: "witness", text: `Signed by ${v.witness || "witness"} for ${p.d}`, at: now() };
+  save();
+  tick();
+  done(`Kept. ${v.witness || "Your witness"} confirmed it.`);
+}
+
 function wireNew() {
   const f = $("#newf");
   if (!f) {
@@ -885,7 +1054,13 @@ function wireNew() {
     $("#custom-when").hidden = f.when.value !== "custom";
     $("#custom-stake").hidden = f.stake.value !== "custom";
     $("#timer-box").hidden = f.proof.value !== "timer";
+    const whenText = kind === "once"
+      ? (f.when.value === "custom" ? "custom deadline" : $(`input[name=when][value="${f.when.value}"]`, f).nextElementSibling.textContent)
+      : "repeats";
+    const stakeText = f.stake.value === "custom" ? money(Number($("#f-stake").value) || 0) : money(Number(f.stake.value));
+    $("#opts-sum").textContent = `${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"} · ${proofLabel[f.proof.value].toLowerCase()} proof · change`;
   };
+  f.addEventListener("input", sync);
   f.addEventListener("change", (e) => {
     if (e.target.name === "kind") {
       $("#f-escalate").checked = f.kind.value === "repeat";
@@ -926,7 +1101,7 @@ function createVow(f) {
     escalate: $("#f-escalate").checked, to: $("#f-to").value.trim() || "a charity",
     proof: f.proof.value, timerMin: Math.max(1, Number($("#f-timer").value) || 25),
     witness: $("#f-witness").value.trim(), plan: $("#f-plan").value.trim(),
-    witnessKey: uid() + uid(), sentAt: null, pending: [], occ: [],
+    sentAt: null, witnessPub: null, pending: [], occ: [],
   };
   if (kind === "once") {
     let due = f.when.value === "custom" ? new Date($("#f-when").value).getTime() : Number(f.when.value);
@@ -960,7 +1135,7 @@ function offerWitness(v, fresh) {
   const msg = `I just made a vow: "${v.title}", ${scheduleText(v)}. If I break it, I pay ${money(v.stake)} to ${v.to}. Will you be my witness? ${link}`;
   openDialog(`<div class="stack">
     <h2 id="dlg-title">${fresh ? "Sealed. Now tell " + esc(who) + "." : "Send to " + esc(who)}</h2>
-    <p class="muted small">A vow nobody knows about is easy to break. Send this message. Their link shows them a code to give you only when they've seen proof.</p>
+    <p class="muted small">A vow nobody knows about is easy to break. When ${esc(who)} accepts, their phone gets a private key, and only they can confirm your proof.</p>
     <textarea id="wmsg" aria-label="Message to your witness" readonly>${esc(msg)}</textarea>
     <div class="row"><button class="btn ghost" data-close>${fresh ? "Later" : "Close"}</button><span class="spacer"></span>
       <button class="btn primary" id="wsend">Send message</button></div></div>`, (d) => {
@@ -970,6 +1145,16 @@ function offerWitness(v, fresh) {
       save();
       render();
     });
+  });
+}
+
+function tellWitness(title, v, msg) {
+  openDialog(`<div class="stack">
+    <h2 id="dlg-title">${esc(title)}</h2>
+    <p class="muted small">Keep ${esc((v && v.witness) || "your witness")} in the loop.</p>
+    <textarea aria-label="Message to your witness" readonly>${esc(msg)}</textarea>
+    <div class="row"><button class="btn ghost" data-close>Close</button><span class="spacer"></span><button class="btn primary" id="tsend">Send</button></div></div>`, (d) => {
+    $("#tsend", d).addEventListener("click", () => shareText(msg));
   });
 }
 
@@ -1014,6 +1199,17 @@ function compressPhoto(file) {
 }
 
 function keep(v, o, proof) {
+  if (v.witnessPub && proof.type !== "witness") {
+    o.claim = proof;
+    o.claimedAt = now();
+    save();
+    dlg.close();
+    render();
+    const msg = `Proof for "${v.title}" (${dateKey(o.due)}): ${proof.text || "photo attached in Vow"}. Please confirm in Vow if it's real.`;
+    tellWitness(`Sent to ${v.witness} for confirmation`, v, msg);
+    toast(`${v.witness} has 24 h after the deadline to confirm.`);
+    return;
+  }
   o.status = "kept";
   o.resolvedAt = now();
   o.proof = proof;
@@ -1032,7 +1228,7 @@ function checkIn(v) {
   if (!o) {
     return;
   }
-  const head = `<h2 id="dlg-title">Check in</h2><p class="muted small">"${esc(v.title)}"</p>`;
+  const head = `<h2 id="dlg-title">Check in</h2><p class="muted small">"${esc(v.title)}"${v.witnessPub && v.proof !== "witness" ? ` · ${esc(v.witness)} confirms this before it counts` : ""}</p>`;
   const foot = (label) => `<div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary" id="ok">${label}</button></div>`;
   if (v.proof === "note") {
     openDialog(`<form class="stack" id="pf">${head}
@@ -1078,20 +1274,16 @@ function checkIn(v) {
       });
     });
   } else if (v.proof === "witness") {
-    openDialog(`<form class="stack" id="pf">${head}
-      <label class="field"><span>Code from ${esc(v.witness || "your witness")}</span><input type="text" id="pcode" inputmode="numeric" maxlength="7" autocomplete="one-time-code" required></label>
-      <p class="hint">They see the code on their witness link once they've seen proof. <button type="button" class="btn ghost" id="resend">Send link again</button></p>${foot("Verify")}</form>`, (d) => {
-      $("#resend", d).addEventListener("click", () => offerWitness(v, false));
-      $("#pf", d).addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const code = $("#pcode", d).value.replace(/\D/g, "");
-        const want = await witnessCode(v.witnessKey, dateKey(o.due));
-        if (code !== want) {
-          toast("That code doesn't match. Check the day on their page.");
-          return;
-        }
-        keep(v, o, { type: "witness", text: `Verified by ${v.witness || "witness"}`, at: now() });
-      });
+    const who = esc(v.witness || "your witness");
+    const msg = `Can you confirm my vow "${v.title}" for ${dateKey(o.due)}? Open Vow, tap Confirm proof, and send me the link.`;
+    openDialog(`<div class="stack">${head}
+      ${v.witnessPub
+        ? `<p>Show ${who} your proof. They tap <b>Confirm proof</b> in their Vow and send you a link. Opening that link checks you in.</p>`
+        : `<p>${who} hasn't accepted yet. Until they do, nobody can confirm this vow.</p>`}
+      <p class="hint">Only ${who}'s phone holds the key that signs confirmations. You can't make one yourself.</p>
+      <div class="row"><button class="btn ghost" data-close>Close</button><span class="spacer"></span>
+        <button class="btn primary" id="ask">${v.witnessPub ? `Ask ${who}` : "Send invite again"}</button></div></div>`, (d) => {
+      $("#ask", d).addEventListener("click", () => (v.witnessPub ? shareText(msg) : offerWitness(v, false)));
     });
   } else {
     let left = v.timerMin * 60;
@@ -1232,7 +1424,7 @@ async function act(kind, v) {
     save();
     tick();
     render();
-    toast("Pass used. Tell your witness.");
+    tellWitness("Pass used", v, `I used my one "life happens" pass this month on "${v.title}": ${o.reason}.`);
   } else if (kind === "reword") {
     if (!freeEdit(v)) {
       toast("The wording is sealed now.");
@@ -1265,7 +1457,7 @@ async function payDebt(id) {
   d.receipt = val.trim();
   save();
   render();
-  toast("Logged. Debt settled.");
+  tellWitness("Debt settled", S.vows.find((v) => v.id === d.vowId), `I paid ${money(d.amount)} to ${d.to} for breaking "${d.title}". Receipt: ${d.receipt}.`);
 }
 
 function wireSettings() {
@@ -1283,7 +1475,8 @@ function wireSettings() {
     applyTheme();
   }));
   $("#export").addEventListener("click", () => {
-    download(`vow-backup-${dateKey(now())}.json`, JSON.stringify(S, null, 2), "application/json");
+    const backup = { ...S, witnessing: loadWitnessing() };
+    download(`vow-backup-${dateKey(now())}.json`, JSON.stringify(backup, null, 2), "application/json");
   });
   $("#import-file").addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -1295,6 +1488,12 @@ function wireSettings() {
       if (!Array.isArray(data.vows) || !Array.isArray(data.debts)) {
         throw new Error("bad");
       }
+      if (Array.isArray(data.witnessing)) {
+        const restoredIds = new Set(data.witnessing.map((w) => w.id));
+        const kept = loadWitnessing().filter((w) => !restoredIds.has(w.id));
+        saveWitnessing([...kept, ...data.witnessing]);
+      }
+      delete data.witnessing;
       S = { ...blankState(), ...data };
       save();
       applyTheme();
@@ -1305,9 +1504,11 @@ function wireSettings() {
     }
   });
   $("#erase").addEventListener("click", async () => {
-    const val = await ask({ title: "Erase everything?", body: "This removes all vows, history and debts from this device. Export a backup first.", label: "Type ERASE to confirm", ok: "Erase" });
+    const val = await ask({ title: "Erase everything?", body: "This removes your vows and history from this device. Unpaid debts stay until you pay them, and vows you witness for friends keep working.", label: "Type ERASE to confirm", ok: "Erase" });
     if (val && val.trim().toUpperCase() === "ERASE") {
+      const unpaid = S.debts.filter((d) => !d.paidAt);
       S = blankState();
+      S.debts = unpaid;
       save();
       applyTheme();
       location.hash = "";
@@ -1327,6 +1528,8 @@ document.addEventListener("click", (e) => {
     checkIn(find(t.dataset.checkin));
   } else if (t.dataset.act) {
     act(t.dataset.act, find(t.dataset.id));
+  } else if (t.dataset.confirm) {
+    confirmProof(t.dataset.confirm);
   } else if (t.dataset.pay) {
     payDebt(t.dataset.pay);
   } else if (t.dataset.undo) {
@@ -1346,7 +1549,12 @@ function updateCountdowns() {
   });
 }
 
-window.addEventListener("hashchange", render);
+window.addEventListener("hashchange", () => {
+  if (dlg.open) {
+    dlg.close();
+  }
+  render();
+});
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
