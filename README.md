@@ -19,10 +19,19 @@ Live: https://juw12.github.io/vow/
 - **Debts need proof.** A debt clears only with a photo of the donation receipt, or with a confirmation link your
   witness signs on their own device ("paid:<debt>"). Ticking "I paid" alone is not enough.
 - Raising a stake is instant. Lowering, delaying or deleting waits 24 hours, and a deadline before then still counts.
+- **No free escape from far deadlines.** If the next deadline is more than 24 hours away, deleting means walking away:
+  you owe the stake, or your witness signs you off.
+- **QR hand-offs.** Every link you pass between phones (invite, acceptance, proof confirmation, walk-away, payment
+  request and confirmation) is also shown as a QR code, so your witness can scan it from your screen.
+- **Honest focus timer.** The timer counts real elapsed time; leaving Vow for more than 15 seconds restarts the session.
 - One "life happens" pass per 30 days, only before the deadline.
 - Optional escalation: stake x1.5 per miss, capped at 4x.
 - Streaks, per-vow history dots, 12-week heatmap, monthly summary, calendar (.ics) reminders, light/dark theme.
 - Export/import backup, including the signing keys for vows you witness. Erasing keeps unpaid debts.
+
+## Design
+The UI follows `design.md` ("refined paper": cream paper, serif headings, one brick-red accent, no purple, no emoji),
+chosen by a judged 4-direction bracket (`hone/design-bracket.md`).
 
 ## Honest limits
 - Vow never touches money. It cannot charge you; your witness is what makes it real.
@@ -34,5 +43,6 @@ Open https://juw12.github.io/vow/ and install it from the browser menu, or serve
 (needed for offline install and shareable links): `python -m http.server 8080`, then open http://localhost:8080.
 
 Checked by `tools/check.py` (10 Playwright gates), `tools/check_witness.py` (two-device signed-witness test) and
-`tools/check_backup.py` and `tools/check_proof.py` (camera-only photos, receipt / witness-signed debt clearing); scored by a 3-model council against `hone/rubric.md` (log in `hone/refine_log.md`).
+`tools/check_backup.py`, `tools/check_proof.py` (camera-only photos, receipt / witness-signed debt clearing) and
+`tools/check_extras.py` (24h walk-away, wall-clock timer, QR decode, payment QR flow); scored by a 3-model council against `hone/rubric.md` (log in `hone/refine_log.md`).
 MIT licence.

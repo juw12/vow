@@ -5,25 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vow - keep the promises you make to yourself</title>
 <meta name="description" content="Free, private commitment contracts. Put a stake on a promise, name a witness, and pay your cause if you break it. No account, no subscription.">
-<meta name="theme-color" content="#f6f1e7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#f7f3ea" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15120e" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root {
-  --bg: #f6f1e7;
-  --card: #fffdf8;
-  --ink: #1f1b16;
-  --muted: #6b6257;
-  --line: #e4dccd;
-  --seal: #b42318;
+  --bg: #f7f3ea;
+  --card: #fffdf9;
+  --ink: #1d1a16;
+  --muted: #645b50;
+  --line: #e2d9c8;
+  --seal: #a8261b;
   --seal-ink: #ffffff;
-  --kept: #157f3b;
-  --warn: #a15c07;
-  --soft: #efe7d8;
-  --shadow: 0 1px 2px rgba(31, 27, 22, .06), 0 8px 24px rgba(31, 27, 22, .06);
-  --radius: 16px;
+  --kept: #1d6b3a;
+  --warn: #8a4f0c;
+  --soft: #f0e9dc;
+  --shadow: none;
+  --radius: 12px;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -56,6 +56,9 @@
 .heat .excused { background: var(--warn); }
 .heat .today { outline: 2px solid var(--ink); outline-offset: -1px; }
 .share-link { font-size: 12px; min-height: 64px; }
+.qr-wrap { margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 100%; }
+.qr-wrap .qr { width: min(220px, 100%); height: auto; background: #fff; padding: 8px; border-radius: 8px; box-sizing: border-box; }
+.qr-wrap figcaption { font-size: 12px; color: var(--muted, #666); }
 html, body { margin: 0; }
 body {
   background: var(--bg);
@@ -189,6 +192,31 @@ dialog::backdrop { background: rgba(20, 16, 12, .5); backdrop-filter: blur(2px);
 @media (max-width: 360px) {
   .brand b { display: none; }
 }
+/* ---- Design system v4: "refined paper" (see design.md) ---- */
+.hero h1 { font-size: 32px; letter-spacing: -.01em; }
+.stats { gap: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); }
+.stat { background: none; border: 0; border-radius: 0; padding: 12px 4px; }
+.stat b { font-size: 26px; font-variant-numeric: lining-nums tabular-nums; }
+.stat span { text-transform: uppercase; letter-spacing: .08em; font-size: 11.5px; }
+.card { box-shadow: none; }
+.pill { background: none; border: 1px solid var(--line); font-weight: 500; color: var(--muted); }
+.pill.stake { border-color: var(--seal); color: var(--seal); background: none; font-weight: 700; }
+.pill.kept { background: none; border-color: color-mix(in srgb, var(--kept) 45%, var(--line)); }
+.pill.broken { background: none; border-color: color-mix(in srgb, var(--seal) 45%, var(--line)); }
+.pill.excused { background: none; border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+.pill.warn { background: none; border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line)) !important; }
+.btn { border-radius: 10px; }
+.owed { border-width: 1px; border-top: 3px solid var(--seal); background: var(--card); }
+.countdown { font-variant-numeric: lining-nums tabular-nums; }
+details.more summary { gap: 8px; }
+details.more summary::after {
+  content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); transition: transform .15s ease;
+}
+details.more[open] summary::after { transform: translateY(2px) rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { details.more summary::after { transition: none; } }
+@media (max-width: 560px) { .stat:nth-child(n+3) { border-top: 1px solid var(--line); } .hero h1 { font-size: 28px; } }
+
 </style>
 </head>
 <body>
@@ -230,7 +258,7 @@ const LOCK = 24 * HOUR;
 const FREE_EDIT = 10 * MIN;
 const PASS_WINDOW = 30 * DAY;
 const DEBT_GRACE = 7 * DAY;
-const FAR_OFF = 3 * DAY;
+const FAR_OFF = LOCK;
 const ESCALATE_FACTOR = 1.5;
 const ESCALATE_CAP = 4;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -489,6 +517,345 @@ function download(name, text, type) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+/* Minimal QR Code encoder (byte mode, error correction level M, versions 1-40).
+   Follows the structure of Project Nayuki's QR Code generator (MIT). Returns an SVG string. */
+const QR = (() => {
+  const ECC_PER_BLOCK_M = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28];
+  const BLOCKS_M = [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35, 37, 38, 40, 43, 45, 47, 49];
+  const ECL_FORMAT_BITS_M = 0;
+
+  const bit = (x, i) => ((x >>> i) & 1) !== 0;
+
+  function rawDataModules(ver) {
+    let result = (16 * ver + 128) * ver + 64;
+    if (ver >= 2) {
+      const numAlign = Math.floor(ver / 7) + 2;
+      result -= (25 * numAlign - 10) * numAlign - 55;
+      if (ver >= 7) {
+        result -= 36;
+      }
+    }
+    return result;
+  }
+
+  function dataCodewords(ver) {
+    return Math.floor(rawDataModules(ver) / 8) - ECC_PER_BLOCK_M[ver] * BLOCKS_M[ver];
+  }
+
+  function gfMul(x, y) {
+    let z = 0;
+    for (let i = 7; i >= 0; i--) {
+      z = (z << 1) ^ ((z >>> 7) * 0x11d);
+      z ^= ((y >>> i) & 1) * x;
+    }
+    return z & 0xff;
+  }
+
+  function rsDivisor(degree) {
+    const result = new Array(degree).fill(0);
+    result[degree - 1] = 1;
+    let root = 1;
+    for (let i = 0; i < degree; i++) {
+      for (let j = 0; j < result.length; j++) {
+        result[j] = gfMul(result[j], root);
+        if (j + 1 < result.length) {
+          result[j] ^= result[j + 1];
+        }
+      }
+      root = gfMul(root, 0x02);
+    }
+    return result;
+  }
+
+  function rsRemainder(data, divisor) {
+    const result = divisor.map(() => 0);
+    for (const b of data) {
+      const factor = b ^ result.shift();
+      result.push(0);
+      divisor.forEach((coef, i) => {
+        result[i] ^= gfMul(coef, factor);
+      });
+    }
+    return result;
+  }
+
+  function alignmentPositions(ver, size) {
+    if (ver === 1) {
+      return [];
+    }
+    const numAlign = Math.floor(ver / 7) + 2;
+    const step = Math.floor((ver * 8 + numAlign * 3 + 5) / (numAlign * 4 - 4)) * 2;
+    const result = [6];
+    for (let pos = size - 7; result.length < numAlign; pos -= step) {
+      result.splice(1, 0, pos);
+    }
+    return result;
+  }
+
+  function encode(text) {
+    const bytes = Array.from(new TextEncoder().encode(text));
+    let ver = 1;
+    for (; ver <= 40; ver++) {
+      const countBits = ver <= 9 ? 8 : 16;
+      if (4 + countBits + bytes.length * 8 <= dataCodewords(ver) * 8) {
+        break;
+      }
+    }
+    if (ver > 40) {
+      throw new Error("Text too long for a QR code");
+    }
+    const size = ver * 4 + 17;
+    const capacityBits = dataCodewords(ver) * 8;
+    const bits = [];
+    const push = (value, len) => {
+      for (let i = len - 1; i >= 0; i--) {
+        bits.push((value >>> i) & 1);
+      }
+    };
+    push(0x4, 4);
+    push(bytes.length, ver <= 9 ? 8 : 16);
+    bytes.forEach((b) => push(b, 8));
+    push(0, Math.min(4, capacityBits - bits.length));
+    push(0, (8 - (bits.length % 8)) % 8);
+    for (let pad = 0xec; bits.length < capacityBits; pad ^= 0xec ^ 0x11) {
+      push(pad, 8);
+    }
+    const data = [];
+    for (let i = 0; i < bits.length; i += 8) {
+      let byte = 0;
+      for (let j = 0; j < 8; j++) {
+        byte = (byte << 1) | bits[i + j];
+      }
+      data.push(byte);
+    }
+
+    const numBlocks = BLOCKS_M[ver];
+    const blockEccLen = ECC_PER_BLOCK_M[ver];
+    const rawCodewords = Math.floor(rawDataModules(ver) / 8);
+    const numShortBlocks = numBlocks - (rawCodewords % numBlocks);
+    const shortBlockLen = Math.floor(rawCodewords / numBlocks);
+    const divisor = rsDivisor(blockEccLen);
+    const blocks = [];
+    for (let i = 0, k = 0; i < numBlocks; i++) {
+      const dat = data.slice(k, k + shortBlockLen - blockEccLen + (i < numShortBlocks ? 0 : 1));
+      k += dat.length;
+      const ecc = rsRemainder(dat, divisor);
+      if (i < numShortBlocks) {
+        dat.push(0);
+      }
+      blocks.push(dat.concat(ecc));
+    }
+    const codewords = [];
+    for (let i = 0; i < blocks[0].length; i++) {
+      blocks.forEach((block, j) => {
+        if (i !== shortBlockLen - blockEccLen || j >= numShortBlocks) {
+          codewords.push(block[i]);
+        }
+      });
+    }
+
+    const modules = Array.from({ length: size }, () => new Array(size).fill(false));
+    const isFunction = Array.from({ length: size }, () => new Array(size).fill(false));
+    const setFunction = (x, y, dark) => {
+      modules[y][x] = dark;
+      isFunction[y][x] = true;
+    };
+    for (let i = 0; i < size; i++) {
+      setFunction(6, i, i % 2 === 0);
+      setFunction(i, 6, i % 2 === 0);
+    }
+    const finder = (cx, cy) => {
+      for (let dy = -4; dy <= 4; dy++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          const dist = Math.max(Math.abs(dx), Math.abs(dy));
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x >= 0 && x < size && y >= 0 && y < size) {
+            setFunction(x, y, dist !== 2 && dist !== 4);
+          }
+        }
+      }
+    };
+    finder(3, 3);
+    finder(size - 4, 3);
+    finder(3, size - 4);
+    const align = alignmentPositions(ver, size);
+    const last = align.length - 1;
+    align.forEach((ax, i) => {
+      align.forEach((ay, j) => {
+        if ((i === 0 && j === 0) || (i === 0 && j === last) || (i === last && j === 0)) {
+          return;
+        }
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            setFunction(ax + dx, ay + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+          }
+        }
+      });
+    });
+    const drawFormat = (mask) => {
+      const dataBits = (ECL_FORMAT_BITS_M << 3) | mask;
+      let rem = dataBits;
+      for (let i = 0; i < 10; i++) {
+        rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+      }
+      const fmt = ((dataBits << 10) | rem) ^ 0x5412;
+      for (let i = 0; i <= 5; i++) {
+        setFunction(8, i, bit(fmt, i));
+      }
+      setFunction(8, 7, bit(fmt, 6));
+      setFunction(8, 8, bit(fmt, 7));
+      setFunction(7, 8, bit(fmt, 8));
+      for (let i = 9; i < 15; i++) {
+        setFunction(14 - i, 8, bit(fmt, i));
+      }
+      for (let i = 0; i < 8; i++) {
+        setFunction(size - 1 - i, 8, bit(fmt, i));
+      }
+      for (let i = 8; i < 15; i++) {
+        setFunction(8, size - 15 + i, bit(fmt, i));
+      }
+      setFunction(8, size - 8, true);
+    };
+    drawFormat(0);
+    if (ver >= 7) {
+      let rem = ver;
+      for (let i = 0; i < 12; i++) {
+        rem = (rem << 1) ^ ((rem >>> 11) * 0x1f25);
+      }
+      const vbits = (ver << 12) | rem;
+      for (let i = 0; i < 18; i++) {
+        const dark = bit(vbits, i);
+        const a = size - 11 + (i % 3);
+        const b = Math.floor(i / 3);
+        setFunction(a, b, dark);
+        setFunction(b, a, dark);
+      }
+    }
+
+    let i = 0;
+    for (let right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) {
+        right = 5;
+      }
+      for (let vert = 0; vert < size; vert++) {
+        for (let j = 0; j < 2; j++) {
+          const x = right - j;
+          const upward = ((right + 1) & 2) === 0;
+          const y = upward ? size - 1 - vert : vert;
+          if (!isFunction[y][x] && i < codewords.length * 8) {
+            modules[y][x] = bit(codewords[i >>> 3], 7 - (i & 7));
+            i++;
+          }
+        }
+      }
+    }
+
+    const maskFn = [
+      (x, y) => (x + y) % 2 === 0,
+      (x, y) => y % 2 === 0,
+      (x) => x % 3 === 0,
+      (x, y) => (x + y) % 3 === 0,
+      (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+      (x, y) => ((x * y) % 2) + ((x * y) % 3) === 0,
+      (x, y) => (((x * y) % 2) + ((x * y) % 3)) % 2 === 0,
+      (x, y) => (((x + y) % 2) + ((x * y) % 3)) % 2 === 0,
+    ];
+    const applyMask = (mask) => {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!isFunction[y][x] && maskFn[mask](x, y)) {
+            modules[y][x] = !modules[y][x];
+          }
+        }
+      }
+    };
+    const penalty = () => {
+      let score = 0;
+      for (let pass = 0; pass < 2; pass++) {
+        for (let a = 0; a < size; a++) {
+          let run = 1;
+          for (let b = 1; b < size; b++) {
+            const cur = pass === 0 ? modules[a][b] : modules[b][a];
+            const prev = pass === 0 ? modules[a][b - 1] : modules[b - 1][a];
+            if (cur === prev) {
+              run++;
+              if (run === 5) {
+                score += 3;
+              } else if (run > 5) {
+                score++;
+              }
+            } else {
+              run = 1;
+            }
+          }
+        }
+      }
+      let dark = 0;
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (modules[y][x]) {
+            dark++;
+          }
+          if (y < size - 1 && x < size - 1) {
+            const c = modules[y][x];
+            if (c === modules[y][x + 1] && c === modules[y + 1][x] && c === modules[y + 1][x + 1]) {
+              score += 3;
+            }
+          }
+        }
+      }
+      const total = size * size;
+      score += Math.floor(Math.abs(dark * 20 - total * 10) / total) * 10;
+      return score;
+    };
+    let bestMask = 0;
+    let bestScore = Infinity;
+    for (let mask = 0; mask < 8; mask++) {
+      applyMask(mask);
+      drawFormat(mask);
+      const score = penalty();
+      if (score < bestScore) {
+        bestScore = score;
+        bestMask = mask;
+      }
+      applyMask(mask);
+    }
+    applyMask(bestMask);
+    drawFormat(bestMask);
+    return { size, modules, version: ver };
+  }
+
+  function svg(text, label) {
+    const { size, modules } = encode(text);
+    const quiet = 4;
+    const total = size + quiet * 2;
+    let path = "";
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (modules[y][x]) {
+          path += `M${x + quiet} ${y + quiet}h1v1h-1z`;
+        }
+      }
+    }
+    const name = String(label || "QR code").replace(/[<>&"]/g, "");
+    return `<svg class="qr" viewBox="0 0 ${total} ${total}" role="img" aria-label="${name}" shape-rendering="crispEdges"><rect width="${total}" height="${total}" fill="#fff"/><path d="${path}" fill="#111"/></svg>`;
+  }
+
+  return { encode, svg };
+})();
+
+function qrBlock(link, label) {
+  if (!link || link.length > 900) {
+    return "";
+  }
+  try {
+    return `<figure class="qr-wrap">${QR.svg(link, label)}<figcaption>Or scan with their phone camera</figcaption></figure>`;
+  } catch (err) {
+    return "";
+  }
+}
+
 async function shareText(text) {
   if (navigator.share) {
     try {
@@ -592,7 +959,7 @@ function owedBanner() {
     <h2 id="owed-h">You owe ${money(total)}</h2>
     <p class="small muted">A broken vow is only real if you pay. Send the money yourself, then log the receipt.</p>
     <ul class="list">${unpaid.map((d) => `<li>
-      <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}" · ${fmtWhen(d.at)}</span></div>
+      <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}" · ${fmtWhen(d.at)}${d.askedAt ? ` · asked ${esc(debtWitness(d).who)} to confirm` : ""}</span></div>
       <button class="btn" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
   </section>`;
 }
@@ -618,10 +985,10 @@ function vowCard(v) {
     <div class="chip-row">
       <span class="pill stake">${money(v.stake)} → ${esc(v.to)}</span>
       <span class="pill">Proof: ${proofLabel[v.proof]}${v.proof === "timer" ? ` ${v.timerMin} min` : ""}</span>
-      ${v.witness ? `<span class="pill">Witness: ${esc(v.witness)}</span>` : ""}
-      ${v.witnessPub ? `<span class="pill kept">${esc(v.witness)} accepted</span>`
-        : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}" style="border:0;cursor:pointer">Waiting for ${esc(v.witness)} to accept</button>`
-        : `<button class="pill warn" data-act="witness" data-id="${v.id}" style="border:0;cursor:pointer">Send invite to ${esc(v.witness)}</button>`}
+      ${!v.witness ? ""
+        : v.witnessPub ? `<span class="pill kept">Witness: ${esc(v.witness)}, accepted</span>`
+        : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}" style="cursor:pointer">Waiting for ${esc(v.witness)} to accept</button>`
+        : `<button class="pill warn" data-act="witness" data-id="${v.id}" style="cursor:pointer">Send invite to ${esc(v.witness)}</button>`}
       ${v.escalate ? `<span class="pill">×1.5 on miss</span>` : ""}
     </div>
     ${v.plan ? `<p class="small" style="margin:0"><b>Plan:</b> ${esc(v.plan)}</p>` : ""}
@@ -637,7 +1004,7 @@ function vowCard(v) {
     ${pending}
     ${v.bailoutAsked && !v.bailoutSignedAt && !(v.pending || []).some((p) => p.type === "delete")
       ? `<div class="pending row"><span>Walk-away: waiting for ${esc(v.witness)} to sign off</span><span class="spacer"></span><button class="btn ghost" data-wa-resend="${v.id}">Resend</button><button class="btn ghost" data-wa-cancel="${v.id}">Cancel</button></div>` : ""}
-    ${freeEdit(v) ? `<p class="small muted row" style="margin:0">Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>. <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
+    ${freeEdit(v) ? `<p class="small muted row" style="margin:0"><span>Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>.</span> <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
     <details class="more"><summary>More options</summary>
       <div class="actions">
         <button class="btn" data-act="raise" data-id="${v.id}">Raise stake</button>
@@ -906,6 +1273,7 @@ function viewInvite(p) {
     <div id="w-after" ${mine ? "" : "hidden"} class="stack">
       <p class="small">Send this acceptance back. Only your phone can confirm their proof from now on.</p>
       <textarea class="share-link" id="share-link" aria-label="Acceptance link" readonly>${mine ? esc(appUrl(`accept=${b64e(JSON.stringify({ id: mine.id, x: mine.pub.x, y: mine.pub.y }))}`)) : ""}</textarea>
+      ${mine ? qrBlock(appUrl(`accept=${b64e(JSON.stringify({ id: mine.id, x: mine.pub.x, y: mine.pub.y }))}`), "Acceptance link") : ""}
       <button class="btn block" id="w-send">Send acceptance</button>
       <p class="small muted">Later, open Vow and tap <b>Confirm proof</b> on the day you've seen it.</p>
     </div>
@@ -924,6 +1292,7 @@ function viewBail(p) {
       : `<p class="pill warn">You aren't the witness for this vow, so you can't sign a walk-away.</p>`}
     <div class="stack">
       <textarea class="share-link" id="b-link" aria-label="Walk-away link" readonly hidden></textarea>
+      <div id="b-qr"></div>
       <button class="btn block" id="b-send" hidden>Send walk-away back</button>
     </div>
     <p class="small muted"><a href="#">Open Vow</a></p>
@@ -941,6 +1310,7 @@ function viewPaid(p) {
       : `<p class="pill warn">You aren't the witness for this vow, so you can't confirm the payment.</p>`}
     <div class="stack">
       <textarea class="share-link" id="p-link" aria-label="Payment confirmation link" readonly hidden></textarea>
+      <div id="p-qr"></div>
       <button class="btn block" id="p-send" hidden>Send confirmation back</button>
     </div>
     <p class="small muted"><a href="#">Open Vow</a></p>
@@ -967,6 +1337,7 @@ async function confirmProof(id) {
     <label class="field"><span>Day</span><input type="date" id="cf-day" value="${day}"></label>
     <div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary">I saw it, sign</button></div>
     <textarea class="share-link" id="cf-link" aria-label="Confirmation link" readonly hidden></textarea>
+    <div id="cf-qr"></div>
   </form>`, (d) => {
     $("#cf", d).addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -976,6 +1347,7 @@ async function confirmProof(id) {
       const box = $("#cf-link", d);
       box.value = link;
       box.hidden = false;
+      $("#cf-qr", d).innerHTML = qrBlock(link, "Confirmation link");
       shareText(`I saw your proof for "${w.t}" (${chosen}). Open this to check in: ${link}`);
     });
   });
@@ -1044,6 +1416,7 @@ function render() {
           const box = $("#p-link");
           box.value = link;
           box.hidden = false;
+          $("#p-qr").innerHTML = qrBlock(link, "Payment confirmation link");
           const send = $("#p-send");
           send.hidden = false;
           send.addEventListener("click", () => shareText(`I saw you pay for "${payload.t}". Open this to clear the debt: ${link}`));
@@ -1066,6 +1439,7 @@ function render() {
           const box = $("#b-link");
           box.value = link;
           box.hidden = false;
+          $("#b-qr").innerHTML = qrBlock(link, "Walk-away link");
           const send = $("#b-send");
           send.hidden = false;
           send.addEventListener("click", () => shareText(`I let you off "${payload.t}". Open this to close it out: ${link}`));
@@ -1277,6 +1651,7 @@ function offerWitness(v, fresh) {
     <h2 id="dlg-title">${fresh ? "Sealed. Now tell " + esc(who) + "." : "Send to " + esc(who)}</h2>
     <p class="muted small">A vow nobody knows about is easy to break. When ${esc(who)} accepts, their phone gets a private key, and only they can confirm your proof.</p>
     <textarea id="wmsg" aria-label="Message to your witness" readonly>${esc(msg)}</textarea>
+    ${qrBlock(link, `Invite link for ${who}`)}
     <div class="row"><button class="btn ghost" data-close>${fresh ? "Later" : "Close"}</button><span class="spacer"></span>
       <button class="btn primary" id="wsend">Send message</button></div></div>`, (d) => {
     $("#wsend", d).addEventListener("click", async () => {
@@ -1466,31 +1841,64 @@ function checkIn(v) {
       $("#ask", d).addEventListener("click", () => (v.witnessPub ? shareText(msg) : offerWitness(v, false)));
     });
   } else {
-    let left = v.timerMin * 60;
+    const total = v.timerMin * 60 * 1000;
+    const AWAY_LIMIT = 15 * 1000;
+    let startedAt = 0;
+    let hiddenAt = 0;
     let timer = null;
     openDialog(`<div class="stack">${head}
       <div class="code" id="tleft" aria-live="off">${String(v.timerMin).padStart(2, "0")}:00</div>
-      <p class="hint">Counts only while Vow is open on screen. Leave and it pauses.</p>
+      <p class="hint" id="thint">Keep Vow open on screen. Leave for more than 15 seconds and the session restarts.</p>
       <div class="row"><button class="btn ghost" data-close>Stop</button><span class="spacer"></span><button class="btn primary" id="tstart">Start focus</button></div></div>`, (d) => {
-      const show = () => {
-        $("#tleft", d).textContent = `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
+      const show = (msLeft) => {
+        const s = Math.max(0, Math.ceil(msLeft / 1000));
+        $("#tleft", d).textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
       };
+      const restart = () => {
+        clearInterval(timer);
+        timer = null;
+        startedAt = 0;
+        show(total);
+        const btn = $("#tstart", d);
+        btn.disabled = false;
+        btn.textContent = "Start again";
+        $("#thint", d).textContent = "You left Vow for more than 15 seconds, so that session didn't count. Start again.";
+      };
+      const onVisibility = () => {
+        if (!startedAt) {
+          return;
+        }
+        if (document.visibilityState !== "visible") {
+          hiddenAt = now();
+        } else if (hiddenAt && now() - hiddenAt > AWAY_LIMIT) {
+          hiddenAt = 0;
+          restart();
+        } else {
+          hiddenAt = 0;
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibility);
       $("#tstart", d).addEventListener("click", (e) => {
         e.target.disabled = true;
-        e.target.textContent = "Focusing…";
+        e.target.textContent = "Focusing\u2026";
+        startedAt = now();
+        hiddenAt = 0;
         timer = setInterval(() => {
-          if (document.visibilityState !== "visible") {
+          if (hiddenAt) {
             return;
           }
-          left--;
-          show();
+          const left = total - (now() - startedAt);
+          show(left);
           if (left <= 0) {
             clearInterval(timer);
-            keep(v, o, { type: "timer", text: `${v.timerMin} min focus`, at: now() });
+            keep(v, o, { type: "timer", text: `${v.timerMin} min focus`, at: now(), startedAt });
           }
-        }, 1000);
+        }, 500);
       });
-      d.addEventListener("close", () => clearInterval(timer), { once: true });
+      d.addEventListener("close", () => {
+        clearInterval(timer);
+        document.removeEventListener("visibilitychange", onVisibility);
+      }, { once: true });
     });
   }
 }
@@ -1518,8 +1926,9 @@ function bailLink(v) {
 function offerBail(v) {
   openDialog(`<div class="stack">
     <h2 id="dlg-title">Ask ${esc(v.witness)} to let you off</h2>
-    <p class="muted small">This vow is still far out, so it can't be deleted for free. Only ${esc(v.witness)} can sign a walk-away.</p>
+    <p class="muted small">The next deadline is more than a day away, so it can't be deleted for free. Only ${esc(v.witness)} can sign a walk-away.</p>
     <textarea id="bmsg" aria-label="Walk-away request" readonly>${esc(bailLink(v))}</textarea>
+    ${qrBlock(bailLink(v), "Walk-away request link")}
     <div class="row"><button class="btn ghost" data-close>Not now</button><span class="spacer"></span><button class="btn primary" id="bmsend">Send walk-away request</button></div>
   </div>`, (d) => {
     $("#bmsend", d).addEventListener("click", () => shareText(`I want to walk away from "${v.title}" before the deadline. Please sign off: ${bailLink(v)}`));
@@ -1529,7 +1938,7 @@ function walkAway(v) {
   const canAsk = !!v.witnessPub;
   openDialog(`<form class="stack" id="wf">
     <h2 id="dlg-title">Walk away?</h2>
-    <p class="muted small">This vow is still far out, so bailing isn't free. Pick how you exit:</p>
+    <p class="muted small">The next deadline is more than a day away, so a 24-hour delete would dodge it. Leaving costs the stake unless your witness lets you off.</p>
     <button type="button" class="btn block" id="w-debt">Owe ${money(v.stake)} to ${esc(v.to)}</button>
     ${canAsk
       ? `<button type="button" class="btn block" id="w-ask">Ask ${esc(v.witness)} to let me off</button>`
@@ -1702,7 +2111,8 @@ function payDebt(id) {
     <label class="field"><span>Reference <span class="muted small">(optional)</span></span><input type="text" id="pay-ref" maxlength="80" placeholder="Transaction ID or a short note"></label>
     <div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary" id="pay-ok">Log payment</button></div>
     ${pub ? `<div class="stack pay-alt"><p class="small">No receipt? Ask ${esc(who)} to confirm. Their phone signs it, so the debt clears when you open their link.</p>
-      <button type="button" class="btn block" id="pay-ask">Ask ${esc(who)} to confirm</button></div>` : ""}
+      <button type="button" class="btn block" id="pay-ask">Ask ${esc(who)} to confirm</button>
+      <div id="pay-ask-out" class="stack" hidden></div></div>` : ""}
   </form>`, (dd) => {
     $("#pay-img", dd).addEventListener("change", async (e) => {
       const file = e.target.files[0];
@@ -1735,6 +2145,10 @@ function payDebt(id) {
         const link = appUrl(`paid=${b64e(JSON.stringify(payload))}`);
         d.askedAt = now();
         save();
+        const out = $("#pay-ask-out", dd);
+        out.innerHTML = `<textarea class="share-link" aria-label="Payment confirmation request link" readonly>${esc(link)}</textarea>
+          ${qrBlock(link, "Payment confirmation request link")}`;
+        out.hidden = false;
         shareText(`I paid ${money(d.amount)} to ${d.to} for breaking "${d.title}". Can you confirm you saw it? ${link}`);
       });
     }

@@ -38,3 +38,37 @@ Post-loop fix (objective, tested by tools/check_backup.py): backups now include 
 Open council fixes (not done): delete of a far-off vow is cost-free (tell/ask witness); timer pauses on
 tab switch; witness onboarding friction (QR/one-tap); EXIF capture-time check; witness counter-sign for
 "I paid" receipts.
+
+
+## v4: open items closed + /design pass (2026-11-07)
+
+### Features (closes the 4 queued items)
+- Far-off delete: `FAR_OFF = 24h`. Deleting a vow whose next deadline is more than 24 h away opens the walk-away
+  (owe the stake, or witness signs off). check.py G4 updated to take the walk-away path (behaviour change, intended).
+- Debts: payment needs a 4+ char reference, optional receipt photo (compressed), and if a witness key exists the
+  witness signs `paid:<debtId>` -> `#paidok=`; forged and replayed confirmations rejected. History shows "confirmed by".
+- Photo proof reads EXIF DateTimeOriginal/DateTime; rejects > 30 min old or > 5 min in the future.
+- Focus timer: wall-clock from `startedAt`, display pauses while hidden, restarts if away > 15 s.
+- QR on every hand-off link (invite, acceptance, proof confirmation, walk-away, payment request/confirmation).
+  Encoder verified: RS syndromes zero v1-22; app matrices decode with two OpenCV decoders at 4-10 px/module;
+  on-screen QR decodes from a 2x screenshot.
+- Tests: `tools/check_extras.py` 22/22, `check.py` 10/10, `check_witness.py` all pass, `check_backup.py` pass.
+
+### /design run
+- References: printed contracts / letterpress, bank-statement header, Things 3, Monzo, Stripe dashboard.
+- Directions (same DOM, seeded with real state from the app, `hone/design/dir-A..D`):
+  A Ledger (flat white, one sans), B Bank app (navy header, filled chips), C Dashboard (two-column, ink buttons),
+  D Refined paper (cream, serif headings, outline chips, ruled ledger strip).
+- slop_check: 0 blockers, 0 warnings on all four and on the shipped app.
+- Bracket (council, 3 judges, both orders): R1 B beat A 2-0-1; D beat C 3-0; final D beat B 3-0. Winner D.
+- Polish round 1 (chip merge "Witness: Sam, accepted", disclosure chevron): pair vs raw D = 1 vote for polished,
+  0 against, 2 ties -> kept polished, plateau stop.
+- Checked by eye: phone light/dark, owed state, new-vow form, desktop. AA contrast measured in both themes
+  (lowest 5.05:1, dark stake chip). No purple, no emoji. `app/design.md` holds the tokens.
+
+
+### v6 merge note (2026-11-07)
+- A concurrent session pushed a26d85c "Vow v5" (camera-only photo proof, debts clear only with receipt image or witness-signed confirmation).
+- Merged: v5 index.html as base; ported refined-paper design tokens/CSS, QR hand-offs (incl. v5 payment ask + #paid confirmation), witness chip, 24h walk-away copy, wall-clock focus timer.
+- Dropped my EXIF photo-date check and my own #paidreq flow as superseded by v5.
+- Checks on merged app (v5 test files kept, they are stricter): check.py all gates incl. G11 far-off delete, check_witness 13/13 incl. forged walk-away, check_backup PASS, check_extras 20/20, check_proof 13/13, slop_check 0 blockers 0 warnings, contrast AA both themes (lowest 5.05:1).
