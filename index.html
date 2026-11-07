@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vow - keep the promises you make to yourself</title>
+<meta name="description" content="Free, private commitment contracts. Put a stake on a promise, name a witness, and pay your cause if you break it. No account, no subscription.">
+<meta name="theme-color" content="#f6f1e7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15120e" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root {
+  --bg: #f6f1e7;
+  --card: #fffdf8;
+  --ink: #1f1b16;
+  --muted: #6b6257;
+  --line: #e4dccd;
+  --seal: #b42318;
+  --seal-ink: #ffffff;
+  --kept: #157f3b;
+  --warn: #a15c07;
+  --soft: #efe7d8;
+  --shadow: 0 1px 2px rgba(31, 27, 22, .06), 0 8px 24px rgba(31, 27, 22, .06);
+  --radius: 16px;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+[data-theme="dark"] {
+  --bg: #15120e;
+  --card: #201c17;
+  --ink: #f2ebdd;
+  --muted: #b3a895;
+  --line: #3a332a;
+  --seal: #f05a47;
+  --seal-ink: #1a0f0c;
+  --kept: #4cc477;
+  --warn: #f0a640;
+  --soft: #2a251e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.dots { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.dot.kept { background: var(--kept); }
+.dot.broken { background: var(--seal); }
+.dot.excused { background: var(--warn); }
+.pill.warn { background: color-mix(in srgb, var(--warn) 18%, var(--card)); color: var(--warn); }
+.story { font: 600 17px/1.5 var(--serif); }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+a { color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 96px; }
+header.top {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; align-items: center; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; }
+.brand svg { width: 34px; height: 34px; }
+.brand b { font: 700 24px/1 var(--serif); letter-spacing: .5px; }
+nav.tabs { display: flex; gap: 4px; }
+nav.tabs a {
+  text-decoration: none; padding: 8px 12px; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 15px;
+}
+nav.tabs a[aria-current="page"] { background: var(--soft); color: var(--ink); }
+h1, h2, h3 { font-family: var(--serif); line-height: 1.2; margin: 0; }
+h1 { font-size: 30px; }
+h2 { font-size: 22px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px;
+}
+.stack > * + * { margin-top: 14px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spacer { flex: 1; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--line); background: var(--card); border-radius: 12px;
+  padding: 10px 16px; font-weight: 600; cursor: pointer; min-height: 44px; text-decoration: none;
+  transition: transform .08s ease, background .15s ease;
+}
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--seal); border-color: var(--seal); color: var(--seal-ink); }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--seal); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn.block { width: 100%; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--seal) 60%, transparent); outline-offset: 2px; }
+.hero { padding: 28px 0 8px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.stat b { display: block; font: 700 24px/1.1 var(--serif); }
+.stat span { font-size: 13px; color: var(--muted); }
+.owed {
+  border: 2px solid var(--seal); background: color-mix(in srgb, var(--seal) 8%, var(--card));
+}
+.vow-card { position: relative; overflow: hidden; }
+.vow-card .title { font: 700 20px/1.25 var(--serif); margin: 0 0 4px; word-break: break-word; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  background: var(--soft); font-size: 13px; font-weight: 600;
+}
+.pill.stake { background: color-mix(in srgb, var(--seal) 14%, var(--card)); color: var(--seal); }
+.pill.kept { background: color-mix(in srgb, var(--kept) 16%, var(--card)); color: var(--kept); }
+.pill.broken { background: color-mix(in srgb, var(--seal) 16%, var(--card)); color: var(--seal); }
+.pill.excused { background: color-mix(in srgb, var(--warn) 16%, var(--card)); color: var(--warn); }
+.countdown { font: 700 28px/1.1 var(--serif); font-variant-numeric: tabular-nums; }
+.countdown.soon { color: var(--seal); }
+.pending { border-left: 3px solid var(--warn); padding: 6px 10px; background: var(--soft); border-radius: 8px; font-size: 14px; }
+details.more summary { cursor: pointer; color: var(--muted); font-weight: 600; list-style: none; min-height: 44px; display: inline-flex; align-items: center; }
+details.more summary::-webkit-details-marker { display: none; }
+.actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
+label.field { display: block; }
+label.field > span, .legend { display: block; font-weight: 700; margin-bottom: 6px; }
+input[type=text], input[type=number], input[type=datetime-local], input[type=time], input[type=date], input[type=email], textarea, select {
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card);
+  min-height: 46px;
+}
+textarea { min-height: 96px; resize: vertical; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label, .chips button {
+  padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); cursor: pointer;
+  font-weight: 600; font-size: 15px; min-height: 40px; display: inline-flex; align-items: center;
+}
+.chips input:checked + span { color: var(--seal-ink); }
+.chips label:has(input:checked) { background: var(--seal); border-color: var(--seal); color: var(--seal-ink); }
+.chips label:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--seal) 60%, transparent); }
+.hint { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.empty { text-align: center; padding: 40px 18px; }
+.empty svg { width: 120px; height: 120px; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.list li:last-child { border-bottom: 0; }
+.thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--soft); }
+dialog {
+  border: 1px solid var(--line); border-radius: 20px; background: var(--card); color: var(--ink);
+  padding: 22px; width: min(480px, calc(100vw - 24px)); box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+dialog::backdrop { background: rgba(20, 16, 12, .5); backdrop-filter: blur(2px); }
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50;
+  background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; font-weight: 600;
+  max-width: calc(100vw - 32px); opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.stamp-overlay {
+  position: fixed; inset: 0; display: grid; place-items: center; z-index: 60; pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.stamp-overlay svg { width: 180px; height: 180px; animation: stamp .6s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes stamp { from { transform: scale(2.4) rotate(-30deg); opacity: 0; } to { transform: scale(1) rotate(-8deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .stamp-overlay svg { animation: none; } .btn { transition: none; } }
+.rules { font-size: 14px; background: var(--soft); border-radius: 12px; padding: 12px 14px; }
+.rules li { margin: 2px 0; }
+.code { font: 700 40px/1 ui-monospace, Consolas, monospace; letter-spacing: 6px; text-align: center; padding: 16px; background: var(--soft); border-radius: 14px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 560px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  h1 { font-size: 26px; }
+  nav.tabs a { padding: 8px 9px; font-size: 14px; }
+  .brand b { font-size: 21px; }
+}
+@media (max-width: 360px) {
+  .brand b { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="Vow home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#seal"/></svg>
+      <b>Vow</b>
+    </a>
+    <nav class="tabs" aria-label="Main">
+      <a href="#" data-route="home">Vows</a>
+      <a href="#history" data-route="history">History</a>
+      <a href="#settings" data-route="settings">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="seal" viewBox="0 0 64 64">
+      <path fill="var(--seal)" d="M32 3l5 4 6-2 3 5 6 1 1 6 5 3-2 6 4 5-4 5 2 6-5 3-1 6-6 1-3 5-6-2-5 4-5-4-6 2-3-5-6-1-1-6-5-3 2-6-4-5 4-5-2-6 5-3 1-6 6-1 3-5 6 2z"/>
+      <circle cx="32" cy="32" r="17" fill="none" stroke="var(--seal-ink)" stroke-width="2.5" opacity=".9"/>
+      <path d="M24 26l8 14 8-14" fill="none" stroke="var(--seal-ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="wrap" id="view" tabindex="-1"></main>
+<dialog id="dlg" aria-labelledby="dlg-title"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const KEY = "vow.v1";
+const MIN = 60e3;
+const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
+const LOCK = 24 * HOUR;
+const FREE_EDIT = 10 * MIN;
+const PASS_WINDOW = 30 * DAY;
+const DEBT_GRACE = 7 * DAY;
+const ESCALATE_FACTOR = 1.5;
+const ESCALATE_CAP = 4;
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const ICS_DAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const now = () => Date.now();
+const uid = () => Math.random().toString(36).slice(2, 10) + now().toString(36).slice(-4);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function blankState() {
+  return { version: 1, settings: { currency: "$", theme: "auto", name: "" }, vows: [], debts: [], passes: [] };
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) {
+      return blankState();
+    }
+    const data = JSON.parse(raw);
+    const base = blankState();
+    return { ...base, ...data, settings: { ...base.settings, ...(data.settings || {}) } };
+  } catch (err) {
+    return blankState();
+  }
+}
+let S = loadState();
+function save() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(S));
+  } catch (err) {
+    toast("Storage is full. Export a backup in Settings.");
+  }
+}
+
+/* ---------- formatting ---------- */
+const money = (n) => `${S.settings.currency}${Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+function fmtWhen(ms) {
+  return new Date(ms).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+function fmtLeft(ms) {
+  if (ms <= 0) {
+    return "0m";
+  }
+  const d = Math.floor(ms / DAY);
+  const h = Math.floor((ms % DAY) / HOUR);
+  const m = Math.floor((ms % HOUR) / MIN);
+  const s = Math.floor((ms % MIN) / 1000);
+  if (d > 0) {
+    return `${d}d ${h}h`;
+  }
+  if (h > 0) {
+    return `${h}h ${String(m).padStart(2, "0")}m`;
+  }
+  return `${m}m ${String(s).padStart(2, "0")}s`;
+}
+function dateKey(ms) {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function toLocalInput(ms) {
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function scheduleText(v) {
+  if (v.kind === "once") {
+    return `by ${fmtWhen(v.occ[0].due)}`;
+  }
+  const days = v.days.length === 7 ? "every day" : v.days.map((d) => DAY_NAMES[d]).join(", ");
+  const until = v.until ? ` until ${new Date(v.until).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : "";
+  return `${days} by ${v.time}${until}`;
+}
+const proofLabel = { photo: "Photo", note: "Written note", timer: "Focus timer", witness: "Witness code" };
+
+/* ---------- schedule engine ---------- */
+function nextDue(v, after) {
+  const [h, m] = v.time.split(":").map(Number);
+  const d = new Date(after);
+  d.setHours(h, m, 0, 0);
+  for (let i = 0; i < 15; i++) {
+    if (d.getTime() > after && v.days.includes(d.getDay())) {
+      return d.getTime();
+    }
+    d.setDate(d.getDate() + 1);
+    d.setHours(h, m, 0, 0);
+  }
+  return null;
+}
+const openOcc = (v) => v.occ.find((o) => o.status === "open");
+const freeEdit = (v) => now() - v.createdAt < FREE_EDIT;
+
+function addDebt(v, o) {
+  const debt = { id: uid(), vowId: v.id, occId: o.id, title: v.title, amount: o.stake, to: v.to, at: o.due, paidAt: null, receipt: "" };
+  S.debts.push(debt);
+  return debt;
+}
+
+function applyPending(v, p) {
+  const open = openOcc(v);
+  if (p.type === "lower") {
+    v.stake = p.value;
+    v.baseStake = Math.min(v.baseStake, p.value);
+    if (open) {
+      open.stake = p.value;
+    }
+  } else if (p.type === "push" && open) {
+    open.due = p.value;
+  } else if (p.type === "delete") {
+    v.status = "deleted";
+    if (open) {
+      open.status = "cancelled";
+    }
+  }
+}
+
+function tick() {
+  const t = now();
+  const broken = [];
+  let changed = false;
+  for (const v of S.vows) {
+    if (v.status !== "active") {
+      continue;
+    }
+    const due = (v.pending || []).filter((p) => p.at <= t).sort((a, b) => a.at - b.at);
+    for (const p of due) {
+      // a deadline that passed before the change took effect still counts
+      const open = openOcc(v);
+      if (open && open.due <= p.at) {
+        break;
+      }
+      applyPending(v, p);
+      v.pending = v.pending.filter((x) => x !== p);
+      changed = true;
+    }
+    let guard = 0;
+    while (v.status === "active" && guard++ < 200) {
+      let o = openOcc(v);
+      if (!o) {
+        if (v.kind !== "repeat") {
+          v.status = "done";
+          changed = true;
+          break;
+        }
+        const last = v.occ[v.occ.length - 1];
+        const dueAt = nextDue(v, last ? last.due : v.createdAt + 30 * MIN);
+        if (dueAt === null || (v.until && dueAt > v.until)) {
+          v.status = "done";
+          changed = true;
+          break;
+        }
+        o = { id: uid(), opens: last ? last.due : v.createdAt, due: dueAt, status: "open", stake: v.stake };
+        v.occ.push(o);
+        changed = true;
+      }
+      if (o.due > t) {
+        break;
+      }
+      o.status = "broken";
+      o.resolvedAt = o.due;
+      broken.push({ v, debt: addDebt(v, o) });
+      if (v.escalate) {
+        v.stake = Math.min(Math.ceil(v.stake * ESCALATE_FACTOR), v.baseStake * ESCALATE_CAP);
+      }
+      // pending changes that were waiting on this deadline now apply to the next one
+      for (const p of (v.pending || []).filter((p) => p.at <= t)) {
+        applyPending(v, p);
+        v.pending = v.pending.filter((x) => x !== p);
+      }
+      changed = true;
+    }
+  }
+  if (changed) {
+    save();
+    render();
+  }
+  if (broken.length) {
+    confess(broken);
+  }
+}
+
+/* ---------- witness codes ---------- */
+const b64e = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const b64d = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)));
+async function witnessCode(key, day) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${key}:${day}`));
+  const n = new DataView(buf).getUint32(0) % 1e6;
+  return String(n).padStart(6, "0");
+}
+function witnessLink(v) {
+  const payload = {
+    t: v.title, k: v.witnessKey, n: S.settings.name || "", kind: v.kind, to: v.to, s: money(v.stake),
+    due: v.kind === "once" ? v.occ[0].due : null, days: v.days || null, time: v.time || null,
+  };
+  return `${location.origin}${location.pathname}#w=${b64e(JSON.stringify(payload))}`;
+}
+
+/* ---------- helpers ---------- */
+let toastTimer;
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2800);
+}
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function shareText(text) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+      return;
+    } catch (err) {
+      if (err && err.name === "AbortError") {
+        return;
+      }
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Copied. Paste it to your witness.");
+  } catch (err) {
+    toast("Select and copy the message above.");
+  }
+}
+function stamp(color) {
+  const o = document.createElement("div");
+  o.className = "stamp-overlay";
+  o.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true" style="${color ? `--seal:${color}` : ""}"><use href="#seal"/></svg>`;
+  document.body.appendChild(o);
+  setTimeout(() => o.remove(), 900);
+}
+
+const dlg = $("#dlg");
+function openDialog(html, onReady) {
+  dlg.innerHTML = html;
+  if (!dlg.open) {
+    dlg.showModal();
+  }
+  $$("[data-close]", dlg).forEach((b) => b.addEventListener("click", () => dlg.close()));
+  if (onReady) {
+    onReady(dlg);
+  }
+}
+function ask({ title, body = "", label, type = "text", value = "", min, ok = "OK" }) {
+  return new Promise((resolve) => {
+    openDialog(`
+      <form method="dialog" class="stack" id="askf">
+        <h2 id="dlg-title">${esc(title)}</h2>
+        ${body ? `<p class="muted">${body}</p>` : ""}
+        <label class="field"><span>${esc(label)}</span>
+          <input id="askv" type="${type}" value="${esc(value)}" ${min !== undefined ? `min="${min}"` : ""} required></label>
+        <div class="row"><span class="spacer"></span>
+          <button type="button" class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" value="ok">${esc(ok)}</button></div>
+      </form>`, (d) => {
+      const input = $("#askv", d);
+      input.focus();
+      $("#askf", d).addEventListener("submit", (e) => {
+        e.preventDefault();
+        resolve(input.value);
+        d.close();
+      });
+      d.addEventListener("close", () => resolve(null), { once: true });
+    });
+  });
+}
+
+/* ---------- views ---------- */
+function stats() {
+  const all = S.vows.flatMap((v) => v.occ);
+  const kept = all.filter((o) => o.status === "kept");
+  const broken = all.filter((o) => o.status === "broken");
+  const resolved = all.filter((o) => ["kept", "broken"].includes(o.status)).sort((a, b) => b.resolvedAt - a.resolvedAt);
+  let streak = 0;
+  for (const o of resolved) {
+    if (o.status !== "kept") {
+      break;
+    }
+    streak++;
+  }
+  const owed = S.debts.filter((d) => !d.paidAt).reduce((a, d) => a + d.amount, 0);
+  const paid = S.debts.filter((d) => d.paidAt).reduce((a, d) => a + d.amount, 0);
+  const rate = resolved.length ? Math.round((kept.length / resolved.length) * 100) : null;
+  let best = 0;
+  let run = 0;
+  for (const o of resolved.slice().reverse()) {
+    run = o.status === "kept" ? run + 1 : 0;
+    best = Math.max(best, run);
+  }
+  const monthStart = new Date(now());
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const month = all.filter((o) => (o.resolvedAt || 0) >= monthStart.getTime());
+  return {
+    kept: kept.length, broken: broken.length, streak, best, owed, paid, rate, saved: kept.reduce((a, o) => a + o.stake, 0),
+    month: { kept: month.filter((o) => o.status === "kept").length, broken: month.filter((o) => o.status === "broken").length, excused: month.filter((o) => o.status === "excused").length },
+  };
+}
+
+function owedBanner() {
+  const unpaid = S.debts.filter((d) => !d.paidAt);
+  if (!unpaid.length) {
+    return "";
+  }
+  const total = unpaid.reduce((a, d) => a + d.amount, 0);
+  return `<section class="card owed stack" aria-labelledby="owed-h">
+    <h2 id="owed-h">You owe ${money(total)}</h2>
+    <p class="small muted">A broken vow is only real if you pay. Send the money yourself, then log the receipt.</p>
+    <ul class="list">${unpaid.map((d) => `<li>
+      <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}" · ${fmtWhen(d.at)}</span></div>
+      <button class="btn" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
+  </section>`;
+}
+
+function vowCard(v) {
+  const o = openOcc(v);
+  const t = now();
+  const pending = (v.pending || []).map((p) => {
+    const what = p.type === "lower" ? `Stake drops to ${money(p.value)}` : p.type === "push" ? `Deadline moves to ${fmtWhen(p.value)}` : "Vow will be deleted";
+    return `<div class="pending row"><span>${what} in <b data-left="${p.at}">${fmtLeft(p.at - t)}</b></span><span class="spacer"></span>
+      <button class="btn ghost" data-undo="${v.id}:${p.id}">Cancel change</button></div>`;
+  }).join("");
+  const notOpen = o && o.opens > t;
+  return `<article class="card vow-card stack" data-vow="${v.id}">
+    <div>
+      <h3 class="title">${esc(v.title)}</h3>
+      <div class="muted small">${esc(scheduleText(v))}</div>
+    </div>
+    <div class="chip-row">
+      <span class="pill stake">${money(v.stake)} → ${esc(v.to)}</span>
+      <span class="pill">Proof: ${proofLabel[v.proof]}${v.proof === "timer" ? ` ${v.timerMin} min` : ""}</span>
+      ${v.witness ? `<span class="pill">Witness: ${esc(v.witness)}</span>` : ""}
+      ${v.witness && !v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}" style="border:0;cursor:pointer">Not sent to ${esc(v.witness)} yet: send</button>` : ""}
+      ${v.escalate ? `<span class="pill">×1.5 on miss</span>` : ""}
+    </div>
+    ${v.plan ? `<p class="small" style="margin:0"><b>Plan:</b> ${esc(v.plan)}</p>` : ""}
+    ${vowTrail(v)}
+    ${o ? `<div class="row">
+      <div><div class="small muted">${notOpen ? "Check-in opens in" : "Time left"}</div>
+        <div class="countdown ${o.due - t < 3 * HOUR ? "soon" : ""}" data-left="${notOpen ? o.opens : o.due}">${fmtLeft((notOpen ? o.opens : o.due) - t)}</div></div>
+      <span class="spacer"></span>
+      <button class="btn primary" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>
+    </div>` : ""}
+    ${pending}
+    ${freeEdit(v) ? `<p class="small muted row" style="margin:0">Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>. <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
+    <details class="more"><summary>More options</summary>
+      <div class="actions">
+        <button class="btn" data-act="raise" data-id="${v.id}">Raise stake</button>
+        <button class="btn" data-act="lower" data-id="${v.id}">Lower stake</button>
+        ${v.kind === "once" ? `<button class="btn" data-act="push" data-id="${v.id}">Push deadline</button>` : ""}
+        <button class="btn" data-act="pass" data-id="${v.id}">Life happens pass</button>
+        <button class="btn" data-act="witness" data-id="${v.id}">Send to witness</button>
+        <button class="btn" data-act="ics" data-id="${v.id}">Add to calendar</button>
+        <button class="btn danger" data-act="delete" data-id="${v.id}">Delete vow</button>
+      </div>
+    </details>
+  </article>`;
+}
+
+function vowStreak(v) {
+  let n = 0;
+  const done = v.occ.filter((o) => ["kept", "broken"].includes(o.status));
+  for (let i = done.length - 1; i >= 0 && done[i].status === "kept"; i--) {
+    n++;
+  }
+  return n;
+}
+function vowTrail(v) {
+  const done = v.occ.filter((o) => o.status !== "open" && o.status !== "cancelled").slice(-14);
+  if (v.kind !== "repeat" || !done.length) {
+    return "";
+  }
+  const streak = vowStreak(v);
+  return `<div class="row small"><div class="dots" aria-label="Last ${done.length} check-ins">${done.map((o) => `<span class="dot ${o.status}" title="${fmtWhen(o.due)}: ${o.status}"></span>`).join("")}</div>
+    <span class="muted">${streak ? `${streak} in a row` : "Start a new streak today"}</span></div>`;
+}
+
+function viewHome() {
+  const active = S.vows.filter((v) => v.status === "active");
+  const st = stats();
+  if (!S.vows.length) {
+    return `<section class="empty stack">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#seal"/></svg>
+      <h1>Keep the promises you make to yourself.</h1>
+      <p class="muted">Put money on it. Name a witness. If you don't show proof by the deadline, you pay your cause, not us.</p>
+      <p><a class="btn primary" href="#new">Make your first vow</a></p>
+      <p class="small muted">Free. No account. Everything stays on this device.</p>
+    </section>`;
+  }
+  return `<div class="hero row"><h1>Your vows</h1><span class="spacer"></span><a class="btn primary" href="#new">New vow</a></div>
+    <div class="stack">
+      ${owedBanner()}
+      <section class="stats" aria-label="Your record">
+        <div class="stat"><b>${st.kept}</b><span>kept</span></div>
+        <div class="stat"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>kept rate</span></div>
+        <div class="stat"><b>${st.streak}</b><span>streak (best ${st.best})</span></div>
+        <div class="stat"><b>${money(st.saved)}</b><span>stakes kept safe</span></div>
+      </section>
+      ${active.length ? active.map(vowCard).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
+    </div>`;
+}
+
+function viewNew() {
+  const blocked = S.debts.filter((d) => !d.paidAt && now() - d.at > DEBT_GRACE);
+  if (blocked.length) {
+    return `<div class="hero"><h1>Settle up first</h1></div>
+      <div class="stack"><p>You have a debt older than 7 days. New vows unlock when you've paid it.</p>${owedBanner()}</div>`;
+  }
+  const t = now();
+  const tonight = new Date(t);
+  tonight.setHours(23, 59, 0, 0);
+  if (tonight.getTime() - t < HOUR) {
+    tonight.setDate(tonight.getDate() + 1);
+  }
+  const tomorrow = new Date(t);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+  const week = t + 7 * DAY;
+  const ideas = ["Go to the gym", "Write 500 words", "Study for 1 hour", "Run 5 km"];
+  return `<div class="hero"><h1>Make a vow</h1><p class="muted">About 30 seconds. Defaults are fine.</p></div>
+  <form id="newf" class="card stack" novalidate>
+    <label class="field"><span>I will…</span>
+      <input type="text" id="f-title" maxlength="80" placeholder="go to the gym for 45 minutes" required autocomplete="off"></label>
+    <div class="chips" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
+
+    <fieldset><legend class="legend">How often</legend>
+      <div class="chips">
+        <label><input type="radio" name="kind" value="once" checked><span>Once</span></label>
+        <label><input type="radio" name="kind" value="repeat"><span>Repeats</span></label>
+      </div></fieldset>
+
+    <fieldset id="once-box"><legend class="legend">Deadline</legend>
+      <div class="chips">
+        <label><input type="radio" name="when" value="${tonight.getTime()}" checked><span>Tonight ${tonight.getHours()}:59</span></label>
+        <label><input type="radio" name="when" value="${tomorrow.getTime()}"><span>Tomorrow 9:00</span></label>
+        <label><input type="radio" name="when" value="${week}"><span>In 1 week</span></label>
+        <label><input type="radio" name="when" value="custom"><span>Pick…</span></label>
+      </div>
+      <label class="field" id="custom-when" hidden style="margin-top:8px"><span class="sr">Custom deadline</span>
+        <input type="datetime-local" id="f-when" value="${toLocalInput(tomorrow.getTime())}"></label>
+    </fieldset>
+
+    <fieldset id="repeat-box" hidden><legend class="legend">On these days, by</legend>
+      <div class="chips">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<label><input type="checkbox" name="days" value="${d}" checked><span>${DAY_NAMES[d]}</span></label>`).join("")}</div>
+      <div class="row" style="margin-top:8px">
+        <label class="field" style="flex:1;min-width:140px"><span class="small">Time</span><input type="time" id="f-time" value="21:00"></label>
+        <label class="field" style="flex:1;min-width:140px"><span class="small">For</span>
+          <select id="f-until"><option value="7">1 week</option><option value="30" selected>30 days</option><option value="66">66 days</option><option value="0">No end</option></select></label>
+      </div>
+    </fieldset>
+
+    <fieldset><legend class="legend">Stake</legend>
+      <div class="chips">
+        ${[5, 10, 25, 50].map((n) => `<label><input type="radio" name="stake" value="${n}" ${n === 10 ? "checked" : ""}><span>${money(n)}</span></label>`).join("")}
+        <label><input type="radio" name="stake" value="custom"><span>Other</span></label>
+      </div>
+      <label class="field" id="custom-stake" hidden style="margin-top:8px"><span class="sr">Custom stake</span>
+        <input type="number" id="f-stake" min="1" step="1" value="100" inputmode="numeric"></label>
+    </fieldset>
+
+    <label class="field"><span>If I break it, I pay it to</span>
+      <input type="text" id="f-to" value="a charity" maxlength="60" required></label>
+    <div class="chips" aria-label="Where the money goes">
+      ${["a charity", "my witness", "a cause I dislike"].map((x) => `<button type="button" data-to="${x}">${x}</button>`).join("")}
+    </div>
+
+    <fieldset><legend class="legend">Proof I'll show</legend>
+      <div class="chips">
+        <label><input type="radio" name="proof" value="photo" checked><span>Photo</span></label>
+        <label><input type="radio" name="proof" value="note"><span>Written note</span></label>
+        <label><input type="radio" name="proof" value="timer"><span>Focus timer</span></label>
+        <label><input type="radio" name="proof" value="witness"><span>Witness code</span></label>
+      </div>
+      <label class="field" id="timer-box" hidden style="margin-top:8px"><span class="small">Minutes of focus</span>
+        <input type="number" id="f-timer" min="1" max="240" value="25"></label>
+    </fieldset>
+
+    <label class="field"><span>Witness</span>
+      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required></label>
+    <p class="hint" style="margin-top:-6px">They get a link with your vow. No witness, no vow.</p>
+
+    <details class="more"><summary>Fine-tune (optional)</summary>
+      <div class="stack">
+        <label class="field"><span>When and where exactly?</span>
+          <input type="text" id="f-plan" maxlength="120" placeholder="Right after work, at the gym next to the office"></label>
+        <label class="row small"><input type="checkbox" id="f-escalate"> Raise the stake ×1.5 each time I miss (max 4×)</label>
+      </div>
+    </details>
+
+    <ul class="rules">
+      <li><b>Raise</b> the stake any time. It applies instantly.</li>
+      <li><b>Lower, delay or delete</b> takes 24 hours to apply.</li>
+      <li>Typos in the wording can be fixed for 10 minutes.</li>
+    </ul>
+    <button class="btn primary block" id="seal-btn">Seal my vow</button>
+  </form>`;
+}
+
+function viewHistory() {
+  const items = S.vows.flatMap((v) => v.occ.filter((o) => o.status !== "open").map((o) => ({ v, o })))
+    .sort((a, b) => (b.o.resolvedAt || b.o.due) - (a.o.resolvedAt || a.o.due));
+  const st = stats();
+  const label = { kept: "Kept", broken: "Broken", excused: "Excused", cancelled: "Cancelled" };
+  const m = st.month;
+  const monthName = new Date(now()).toLocaleDateString(undefined, { month: "long" });
+  const story = m.kept + m.broken + m.excused === 0
+    ? `Nothing settled in ${monthName} yet. Your first kept vow starts the story.`
+    : `In ${monthName} you kept ${m.kept} ${m.kept === 1 ? "promise" : "promises"}${m.broken ? ` and broke ${m.broken}` : ""}${m.excused ? ` (${m.excused} excused)` : ""}. Best streak so far: ${st.best}.`;
+  return `<div class="hero"><h1>History</h1></div>
+  <div class="stack">
+    <p class="story">${story}</p>
+    <section class="stats" aria-label="Totals">
+      <div class="stat"><b>${st.kept}</b><span>kept</span></div>
+      <div class="stat"><b>${st.broken}</b><span>broken</span></div>
+      <div class="stat"><b>${money(st.paid)}</b><span>paid to causes</span></div>
+      <div class="stat"><b>${money(st.owed)}</b><span>still owed</span></div>
+    </section>
+    <section class="card">
+      ${items.length ? `<ul class="list">${items.map(({ v, o }) => `<li>
+        ${o.proof && o.proof.photo ? `<img class="thumb" src="${o.proof.photo}" alt="Proof photo for ${esc(v.title)}">` : ""}
+        <div style="flex:1;min-width:0"><b>${esc(v.title)}</b> <span class="pill ${o.status}">${label[o.status]}</span><br>
+          <span class="small muted">${fmtWhen(o.resolvedAt || o.due)} · ${money(o.stake)}${o.proof && o.proof.text ? ` · "${esc(o.proof.text)}"` : ""}${o.reason ? ` · ${esc(o.reason)}` : ""}</span></div></li>`).join("")}</ul>`
+        : `<p class="muted">Nothing yet. Kept and broken vows show up here.</p>`}
+    </section>
+    ${S.debts.length ? `<section class="card stack"><h2>Payments</h2><ul class="list">${S.debts.slice().reverse().map((d) => `<li><div style="flex:1">
+      <b>${money(d.amount)}</b> to ${esc(d.to)} <span class="pill ${d.paidAt ? "kept" : "broken"}">${d.paidAt ? "Paid" : "Unpaid"}</span><br>
+      <span class="small muted">"${esc(d.title)}"${d.paidAt ? ` · paid ${fmtWhen(d.paidAt)} · receipt: ${esc(d.receipt)}` : ""}</span></div></li>`).join("")}</ul></section>` : ""}
+  </div>`;
+}
+
+function viewSettings() {
+  const s = S.settings;
+  return `<div class="hero"><h1>Settings</h1></div>
+  <div class="stack">
+    <section class="card stack">
+      <label class="field"><span>Your name <span class="muted small">(shown to your witness)</span></span>
+        <input type="text" id="s-name" value="${esc(s.name)}" maxlength="40"></label>
+      <label class="field"><span>Currency symbol</span>
+        <input type="text" id="s-cur" value="${esc(s.currency)}" maxlength="4"></label>
+      <fieldset><legend class="legend">Theme</legend><div class="chips">
+        ${["auto", "light", "dark"].map((x) => `<label><input type="radio" name="theme" value="${x}" ${s.theme === x ? "checked" : ""}><span>${x[0].toUpperCase() + x.slice(1)}</span></label>`).join("")}
+      </div></fieldset>
+    </section>
+    <section class="card stack">
+      <h2>Your data</h2>
+      <p class="small muted">Everything lives on this device only. Back it up now and then.</p>
+      <div class="row">
+        <button class="btn" id="export">Export backup</button>
+        <label class="btn" for="import-file">Import backup</label>
+        <input type="file" id="import-file" accept="application/json,.json" class="sr">
+        <button class="btn danger" id="erase">Erase everything</button>
+      </div>
+    </section>
+    <section class="card stack">
+      <h2>How Vow works</h2>
+      <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
+      <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
+      <p><b>On your honor.</b> Vow can't stop you from opening your own witness link or lying in a note. It makes cheating deliberate, not easy.</p>
+      <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
+      <p class="small muted">Vow is free and has no subscription. It runs offline once loaded.</p>
+    </section>
+  </div>`;
+}
+
+function viewWitness(payload) {
+  const who = payload.n || "Your friend";
+  const sched = payload.kind === "once" ? `by ${fmtWhen(payload.due)}` : `${payload.days.length === 7 ? "every day" : payload.days.map((d) => DAY_NAMES[d]).join(", ")} by ${payload.time}`;
+  const day = payload.kind === "once" ? dateKey(payload.due) : dateKey(now());
+  return `<div class="hero"><h1>You're a witness</h1></div>
+  <section class="card stack">
+    <p><b>${esc(who)}</b> vowed to <b>${esc(payload.t)}</b>, ${esc(sched)}.</p>
+    <p>If they break it, they owe <b>${esc(payload.s)}</b> to ${esc(payload.to)}. Your job: ask them about it and make sure they pay.</p>
+    <label class="field"><span>Day you checked</span><input type="date" id="w-day" value="${day}"></label>
+    <button class="btn primary block" id="w-saw">I saw proof they did it</button>
+    <div id="w-reveal" hidden class="stack">
+      <p class="muted small">Give them this code. It only works for the day above.</p>
+      <div class="code" id="w-code" aria-live="polite">······</div>
+    </div>
+    <p class="small muted">This page doesn't save anything about you. <a href="#">Make your own vow</a>.</p>
+  </section>`;
+}
+
+/* ---------- render + events ---------- */
+function route() {
+  const h = location.hash;
+  if (h.startsWith("#w=")) {
+    return "witness";
+  }
+  return { "#new": "new", "#history": "history", "#settings": "settings" }[h] || "home";
+}
+function applyTheme() {
+  const t = S.settings.theme === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : S.settings.theme;
+  document.documentElement.dataset.theme = t;
+}
+let lastRoute = null;
+function render() {
+  const r = route();
+  const view = $("#view");
+  if (r === "new" && lastRoute === "new" && $("#newf")) {
+    return; // keep the half-filled form
+  }
+  $$("nav.tabs a").forEach((a) => {
+    if (a.dataset.route === r) {
+      a.setAttribute("aria-current", "page");
+    } else {
+      a.removeAttribute("aria-current");
+    }
+  });
+  if (r === "witness") {
+    let payload;
+    try {
+      payload = JSON.parse(b64d(location.hash.slice(3)));
+    } catch (err) {
+      view.innerHTML = `<div class="hero"><h1>That link is broken</h1><p><a href="#">Go to Vow</a></p></div>`;
+      return;
+    }
+    view.innerHTML = viewWitness(payload);
+    const update = async () => {
+      $("#w-code").textContent = await witnessCode(payload.k, $("#w-day").value);
+    };
+    $("#w-day").addEventListener("change", update);
+    $("#w-saw").addEventListener("click", () => {
+      $("#w-reveal").hidden = false;
+      $("#w-saw").hidden = true;
+      update();
+    });
+  } else {
+    view.innerHTML = { home: viewHome, new: viewNew, history: viewHistory, settings: viewSettings }[r]();
+    if (r === "new") {
+      wireNew();
+    }
+    if (r === "settings") {
+      wireSettings();
+    }
+  }
+  if (lastRoute !== r) {
+    window.scrollTo(0, 0);
+  }
+  lastRoute = r;
+}
+
+function wireNew() {
+  const f = $("#newf");
+  if (!f) {
+    return;
+  }
+  const sync = () => {
+    const kind = f.kind.value;
+    $("#once-box").hidden = kind !== "once";
+    $("#repeat-box").hidden = kind !== "repeat";
+    $("#custom-when").hidden = f.when.value !== "custom";
+    $("#custom-stake").hidden = f.stake.value !== "custom";
+    $("#timer-box").hidden = f.proof.value !== "timer";
+  };
+  f.addEventListener("change", (e) => {
+    if (e.target.name === "kind") {
+      $("#f-escalate").checked = f.kind.value === "repeat";
+    }
+    sync();
+  });
+  $$("[data-idea]", f).forEach((b) => b.addEventListener("click", () => {
+    $("#f-title").value = b.dataset.idea;
+    $("#f-title").focus();
+  }));
+  $$("[data-to]", f).forEach((b) => b.addEventListener("click", () => {
+    $("#f-to").value = b.dataset.to;
+  }));
+  f.addEventListener("submit", (e) => {
+    e.preventDefault();
+    createVow(f);
+  });
+  sync();
+}
+
+function createVow(f) {
+  const title = $("#f-title").value.trim();
+  if (title.length < 3) {
+    toast("Write what you'll do.");
+    $("#f-title").focus();
+    return;
+  }
+  if (!$("#f-witness").value.trim()) {
+    toast("Name a witness. A vow nobody knows about is easy to break.");
+    $("#f-witness").focus();
+    return;
+  }
+  const t = now();
+  const kind = f.kind.value;
+  const stake = f.stake.value === "custom" ? Math.max(1, Math.round(Number($("#f-stake").value) || 0)) : Number(f.stake.value);
+  const v = {
+    id: uid(), title, kind, createdAt: t, status: "active", stake, baseStake: stake,
+    escalate: $("#f-escalate").checked, to: $("#f-to").value.trim() || "a charity",
+    proof: f.proof.value, timerMin: Math.max(1, Number($("#f-timer").value) || 25),
+    witness: $("#f-witness").value.trim(), plan: $("#f-plan").value.trim(),
+    witnessKey: uid() + uid(), sentAt: null, pending: [], occ: [],
+  };
+  if (kind === "once") {
+    let due = f.when.value === "custom" ? new Date($("#f-when").value).getTime() : Number(f.when.value);
+    if (!due || due <= t + 5 * MIN) {
+      toast("Pick a deadline at least 5 minutes from now.");
+      return;
+    }
+    v.occ.push({ id: uid(), opens: t, due, status: "open", stake });
+  } else {
+    v.days = $$("input[name=days]:checked", f).map((x) => Number(x.value));
+    if (!v.days.length) {
+      toast("Pick at least one day.");
+      return;
+    }
+    v.time = $("#f-time").value || "21:00";
+    const weeks = Number($("#f-until").value);
+    v.until = weeks ? t + weeks * DAY : null;
+  }
+  S.vows.push(v);
+  save();
+  stamp();
+  location.hash = "";
+  tick();
+  render();
+  setTimeout(() => offerWitness(v, true), 650);
+}
+
+function offerWitness(v, fresh) {
+  const link = witnessLink(v);
+  const who = v.witness || "your witness";
+  const msg = `I just made a vow: "${v.title}", ${scheduleText(v)}. If I break it, I pay ${money(v.stake)} to ${v.to}. Will you be my witness? ${link}`;
+  openDialog(`<div class="stack">
+    <h2 id="dlg-title">${fresh ? "Sealed. Now tell " + esc(who) + "." : "Send to " + esc(who)}</h2>
+    <p class="muted small">A vow nobody knows about is easy to break. Send this message. Their link shows them a code to give you only when they've seen proof.</p>
+    <textarea id="wmsg" aria-label="Message to your witness" readonly>${esc(msg)}</textarea>
+    <div class="row"><button class="btn ghost" data-close>${fresh ? "Later" : "Close"}</button><span class="spacer"></span>
+      <button class="btn primary" id="wsend">Send message</button></div></div>`, (d) => {
+    $("#wsend", d).addEventListener("click", async () => {
+      await shareText(msg);
+      v.sentAt = v.sentAt || now();
+      save();
+      render();
+    });
+  });
+}
+
+function confess(list) {
+  const msgs = list.map(({ v, debt }) => `I broke my vow: "${v.title}". I owe ${money(debt.amount)} to ${debt.to}. Hold me to paying it.`);
+  openDialog(`<div class="stack">
+    <h2 id="dlg-title">Vow broken</h2>
+    ${list.map(({ v, debt }) => `<p><b>"${esc(v.title)}"</b> passed its deadline without proof. You owe <b>${money(debt.amount)}</b> to ${esc(debt.to)}.</p>`).join("")}
+    <p class="small muted">Own it: tell your witness, pay, then log the receipt on the home screen.</p>
+    <textarea aria-label="Message to your witness" readonly>${esc(msgs.join("\n"))}</textarea>
+    <div class="row"><button class="btn ghost" data-close>Close</button><span class="spacer"></span>
+      <button class="btn primary" id="csend">Tell my witness</button></div></div>`, (d) => {
+    $("#csend", d).addEventListener("click", () => shareText(msgs.join("\n")));
+  });
+}
+
+function compressPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 640;
+      const sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * sc);
+      c.height = Math.round(img.height * sc);
+      const g = c.getContext("2d");
+      g.drawImage(img, 0, 0, c.width, c.height);
+      const label = `Vow · ${fmtWhen(now())}`;
+      g.font = "bold 16px system-ui, sans-serif";
+      const w = g.measureText(label).width + 16;
+      g.fillStyle = "rgba(0,0,0,.6)";
+      g.fillRect(8, c.height - 34, w, 26);
+      g.fillStyle = "#fff";
+      g.fillText(label, 16, c.height - 15);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.7));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+function keep(v, o, proof) {
+  o.status = "kept";
+  o.resolvedAt = now();
+  o.proof = proof;
+  save();
+  dlg.close();
+  stamp(getComputedStyle(document.documentElement).getPropertyValue("--kept"));
+  tick();
+  render();
+  const st = stats();
+  const milestone = [3, 5, 10, 25, 50, 100].includes(st.streak);
+  toast(milestone ? `${st.streak} in a row. ${money(st.saved)} kept safe so far.` : `Kept. ${money(o.stake)} stays with you.`);
+}
+
+function checkIn(v) {
+  const o = openOcc(v);
+  if (!o) {
+    return;
+  }
+  const head = `<h2 id="dlg-title">Check in</h2><p class="muted small">"${esc(v.title)}"</p>`;
+  const foot = (label) => `<div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary" id="ok">${label}</button></div>`;
+  if (v.proof === "note") {
+    openDialog(`<form class="stack" id="pf">${head}
+      <label class="field"><span>What exactly did you do?</span><textarea id="pnote" minlength="15" required placeholder="Ran 5.2 km along the coast, 31 minutes"></textarea></label>
+      <p class="hint">At least 15 characters. Be specific, your witness may ask.</p>${foot("Submit proof")}</form>`, (d) => {
+      $("#pf", d).addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = $("#pnote", d).value.trim();
+        if (text.length < 15) {
+          toast("Add a bit more detail (15+ characters).");
+          return;
+        }
+        keep(v, o, { type: "note", text, at: now() });
+      });
+    });
+  } else if (v.proof === "photo") {
+    openDialog(`<form class="stack" id="pf">${head}
+      <label class="field"><span>Take a photo of it</span><input type="file" id="pphoto" accept="image/*" capture="environment" required></label>
+      <p class="hint">Must be taken in the last 30 minutes. It's stamped with the time and stays on this device.</p>
+      <img id="pprev" class="thumb" alt="Photo preview" hidden style="width:100%;height:auto;max-height:260px">${foot("Submit proof")}</form>`, (d) => {
+      let data = null;
+      $("#pphoto", d).addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          return;
+        }
+        if (now() - file.lastModified > 30 * MIN) {
+          toast("That photo is older than 30 minutes. Take a new one.");
+          e.target.value = "";
+          return;
+        }
+        data = await compressPhoto(file);
+        $("#pprev", d).src = data;
+        $("#pprev", d).hidden = false;
+      });
+      $("#pf", d).addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!data) {
+          toast("Add a photo first.");
+          return;
+        }
+        keep(v, o, { type: "photo", photo: data, at: now() });
+      });
+    });
+  } else if (v.proof === "witness") {
+    openDialog(`<form class="stack" id="pf">${head}
+      <label class="field"><span>Code from ${esc(v.witness || "your witness")}</span><input type="text" id="pcode" inputmode="numeric" maxlength="7" autocomplete="one-time-code" required></label>
+      <p class="hint">They see the code on their witness link once they've seen proof. <button type="button" class="btn ghost" id="resend">Send link again</button></p>${foot("Verify")}</form>`, (d) => {
+      $("#resend", d).addEventListener("click", () => offerWitness(v, false));
+      $("#pf", d).addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const code = $("#pcode", d).value.replace(/\D/g, "");
+        const want = await witnessCode(v.witnessKey, dateKey(o.due));
+        if (code !== want) {
+          toast("That code doesn't match. Check the day on their page.");
+          return;
+        }
+        keep(v, o, { type: "witness", text: `Verified by ${v.witness || "witness"}`, at: now() });
+      });
+    });
+  } else {
+    let left = v.timerMin * 60;
+    let timer = null;
+    openDialog(`<div class="stack">${head}
+      <div class="code" id="tleft" aria-live="off">${String(v.timerMin).padStart(2, "0")}:00</div>
+      <p class="hint">Counts only while Vow is open on screen. Leave and it pauses.</p>
+      <div class="row"><button class="btn ghost" data-close>Stop</button><span class="spacer"></span><button class="btn primary" id="tstart">Start focus</button></div></div>`, (d) => {
+      const show = () => {
+        $("#tleft", d).textContent = `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
+      };
+      $("#tstart", d).addEventListener("click", (e) => {
+        e.target.disabled = true;
+        e.target.textContent = "Focusing…";
+        timer = setInterval(() => {
+          if (document.visibilityState !== "visible") {
+            return;
+          }
+          left--;
+          show();
+          if (left <= 0) {
+            clearInterval(timer);
+            keep(v, o, { type: "timer", text: `${v.timerMin} min focus`, at: now() });
+          }
+        }, 1000);
+      });
+      d.addEventListener("close", () => clearInterval(timer), { once: true });
+    });
+  }
+}
+
+function schedule(v, type, value) {
+  v.pending = v.pending || [];
+  v.pending.push({ id: uid(), type, value, at: now() + LOCK });
+  save();
+  render();
+  toast("Scheduled. It applies in 24 hours.");
+}
+
+function icsFor(v) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const local = (ms) => {
+    const d = new Date(ms);
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  };
+  const icsEsc = (s) => String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  const o = openOcc(v) || v.occ[v.occ.length - 1];
+  const start = o.due - 30 * MIN;
+  const stampUtc = new Date(now()).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const lines = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Vow//Commitments//EN", "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT", `UID:${v.id}@vow`, `DTSTAMP:${stampUtc}`, `DTSTART:${local(start)}`, "DURATION:PT30M",
+    `SUMMARY:${icsEsc(`Vow: ${v.title} (${money(v.stake)} at stake)`)}`,
+    `DESCRIPTION:${icsEsc(`Deadline. Check in on Vow with proof or pay ${money(v.stake)} to ${v.to}.`)}`,
+  ];
+  if (v.kind === "repeat") {
+    const until = v.until ? `;UNTIL=${local(v.until)}` : "";
+    lines.push(`RRULE:FREQ=WEEKLY;BYDAY=${v.days.map((d) => ICS_DAYS[d]).join(",")}${until}`);
+  }
+  lines.push("BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:-PT1H", `DESCRIPTION:${icsEsc(`Vow due soon: ${v.title}`)}`, "END:VALARM", "END:VEVENT", "END:VCALENDAR");
+  return lines.join("\r\n") + "\r\n";
+}
+
+async function act(kind, v) {
+  const o = openOcc(v);
+  if (kind === "raise") {
+    const val = await ask({ title: "Raise the stake", label: `New stake (now ${money(v.stake)})`, type: "number", value: v.stake * 2, min: v.stake + 1, ok: "Raise now" });
+    const n = Math.round(Number(val));
+    if (val === null) {
+      return;
+    }
+    if (!(n > v.stake)) {
+      toast("Raising means a bigger number.");
+      return;
+    }
+    v.stake = n;
+    v.baseStake = Math.max(v.baseStake, n);
+    if (o) {
+      o.stake = n;
+    }
+    save();
+    render();
+    toast(`Stake raised to ${money(n)}.`);
+  } else if (kind === "lower") {
+    const val = await ask({ title: "Lower the stake", body: "This waits 24 hours. A deadline before then still counts at the current stake.", label: `New stake (now ${money(v.stake)})`, type: "number", value: Math.max(1, Math.floor(v.stake / 2)), min: 1, ok: "Schedule" });
+    const n = Math.round(Number(val));
+    if (val === null) {
+      return;
+    }
+    if (!(n >= 1 && n < v.stake)) {
+      toast("Pick a smaller amount, at least 1.");
+      return;
+    }
+    schedule(v, "lower", n);
+  } else if (kind === "push") {
+    const val = await ask({ title: "Push the deadline", body: "This waits 24 hours. If the current deadline comes first, it still counts.", label: "New deadline", type: "datetime-local", value: toLocalInput(o.due + DAY), ok: "Schedule" });
+    if (val === null) {
+      return;
+    }
+    const ms = new Date(val).getTime();
+    if (!(ms > o.due)) {
+      toast("Pick a later time than the current deadline.");
+      return;
+    }
+    schedule(v, "push", ms);
+  } else if (kind === "delete") {
+    const val = await ask({ title: "Delete this vow?", body: "Deleting waits 24 hours, and any deadline before then still counts. Debts you already owe stay.", label: "Type DELETE to confirm", ok: "Schedule delete" });
+    if (val === null) {
+      return;
+    }
+    if (val.trim().toUpperCase() !== "DELETE") {
+      toast("Not deleted.");
+      return;
+    }
+    schedule(v, "delete", null);
+  } else if (kind === "pass") {
+    const last = S.passes.filter((p) => now() - p.at < PASS_WINDOW).sort((a, b) => b.at - a.at)[0];
+    if (last) {
+      toast(`Your next pass is available ${fmtWhen(last.at + PASS_WINDOW)}.`);
+      return;
+    }
+    if (!o || o.due <= now()) {
+      toast("Passes only work before the deadline.");
+      return;
+    }
+    const val = await ask({ title: "Life happens pass", body: "One per 30 days, only before the deadline. This check-in is excused and your witness should know why.", label: "What happened?", ok: "Use my pass" });
+    if (val === null) {
+      return;
+    }
+    if (val.trim().length < 5) {
+      toast("Say what happened (5+ characters).");
+      return;
+    }
+    o.status = "excused";
+    o.resolvedAt = now();
+    o.reason = val.trim();
+    S.passes.push({ at: now(), vowId: v.id });
+    save();
+    tick();
+    render();
+    toast("Pass used. Tell your witness.");
+  } else if (kind === "reword") {
+    if (!freeEdit(v)) {
+      toast("The wording is sealed now.");
+      return;
+    }
+    const val = await ask({ title: "Fix the wording", body: "Only the words change. Stake, deadline and witness stay sealed.", label: "I will…", value: v.title, ok: "Save" });
+    if (val && val.trim().length >= 3) {
+      v.title = val.trim();
+      save();
+      render();
+    }
+  } else if (kind === "witness") {
+    offerWitness(v, false);
+  } else if (kind === "ics") {
+    download(`vow-${v.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}.ics`, icsFor(v), "text/calendar");
+  }
+}
+
+async function payDebt(id) {
+  const d = S.debts.find((x) => x.id === id);
+  const val = await ask({ title: `Paid ${money(d.amount)}?`, body: `Log how you paid ${esc(d.to)}: a transaction ID, receipt number or a short note.`, label: "Receipt or reference", ok: "Log payment" });
+  if (val === null) {
+    return;
+  }
+  if (val.trim().length < 4) {
+    toast("Add a receipt or reference (4+ characters).");
+    return;
+  }
+  d.paidAt = now();
+  d.receipt = val.trim();
+  save();
+  render();
+  toast("Logged. Debt settled.");
+}
+
+function wireSettings() {
+  $("#s-name").addEventListener("change", (e) => {
+    S.settings.name = e.target.value.trim();
+    save();
+  });
+  $("#s-cur").addEventListener("change", (e) => {
+    S.settings.currency = e.target.value.trim() || "$";
+    save();
+  });
+  $$("input[name=theme]").forEach((r) => r.addEventListener("change", () => {
+    S.settings.theme = r.value;
+    save();
+    applyTheme();
+  }));
+  $("#export").addEventListener("click", () => {
+    download(`vow-backup-${dateKey(now())}.json`, JSON.stringify(S, null, 2), "application/json");
+  });
+  $("#import-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      return;
+    }
+    try {
+      const data = JSON.parse(await file.text());
+      if (!Array.isArray(data.vows) || !Array.isArray(data.debts)) {
+        throw new Error("bad");
+      }
+      S = { ...blankState(), ...data };
+      save();
+      applyTheme();
+      render();
+      toast("Backup restored.");
+    } catch (err) {
+      toast("That file isn't a Vow backup.");
+    }
+  });
+  $("#erase").addEventListener("click", async () => {
+    const val = await ask({ title: "Erase everything?", body: "This removes all vows, history and debts from this device. Export a backup first.", label: "Type ERASE to confirm", ok: "Erase" });
+    if (val && val.trim().toUpperCase() === "ERASE") {
+      S = blankState();
+      save();
+      applyTheme();
+      location.hash = "";
+      render();
+      toast("Erased.");
+    }
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button");
+  if (!t) {
+    return;
+  }
+  const find = (id) => S.vows.find((v) => v.id === id);
+  if (t.dataset.checkin) {
+    checkIn(find(t.dataset.checkin));
+  } else if (t.dataset.act) {
+    act(t.dataset.act, find(t.dataset.id));
+  } else if (t.dataset.pay) {
+    payDebt(t.dataset.pay);
+  } else if (t.dataset.undo) {
+    const [vid, pid] = t.dataset.undo.split(":");
+    const v = find(vid);
+    v.pending = v.pending.filter((p) => p.id !== pid);
+    save();
+    render();
+    toast("Change cancelled. The vow stands.");
+  }
+});
+
+function updateCountdowns() {
+  const t = now();
+  $$("[data-left]").forEach((el) => {
+    el.textContent = fmtLeft(Number(el.dataset.left) - t);
+  });
+}
+
+window.addEventListener("hashchange", render);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    tick();
+  }
+});
+applyTheme();
+render();
+tick();
+setInterval(updateCountdowns, 1000);
+setInterval(tick, 5000);
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
