@@ -155,6 +155,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .list { list-style: none; padding: 0; margin: 0; }
 .list li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .list li:last-child { border-bottom: 0; }
+.cam video, .cam img { display: block; width: 100%; max-height: 300px; border-radius: 12px; object-fit: cover; background: var(--soft); }
+.pay-alt { border-top: 1px solid var(--line, rgba(127,127,127,.25)); padding-top: 12px; }
 .thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--soft); }
 dialog {
   border: 1px solid var(--line); border-radius: 20px; background: var(--card); color: var(--ink);
@@ -329,7 +331,8 @@ function isFarOff(v) {
 }
 
 function addDebt(v, o) {
-  const debt = { id: uid(), vowId: v.id, occId: o.id, title: v.title, amount: o.stake, to: v.to, at: o.due, paidAt: null, receipt: "" };
+  const debt = { id: uid(), vowId: v.id, occId: o.id, title: v.title, amount: o.stake, to: v.to, at: o.due, paidAt: null, receipt: "",
+    witness: v.witness || "", witnessPub: v.witnessPub || null };
   S.debts.push(debt);
   return debt;
 }
@@ -849,7 +852,8 @@ function viewHistory() {
     </section>
     ${S.debts.length ? `<section class="card stack"><h2>Payments</h2><ul class="list">${S.debts.slice().reverse().map((d) => `<li><div style="flex:1">
       <b>${money(d.amount)}</b> to ${esc(d.to)} <span class="pill ${d.paidAt ? "kept" : "broken"}">${d.paidAt ? "Paid" : "Unpaid"}</span><br>
-      <span class="small muted">"${esc(d.title)}"${d.paidAt ? ` · paid ${fmtWhen(d.paidAt)} · receipt: ${esc(d.receipt)}` : ""}</span></div></li>`).join("")}</ul></section>` : ""}
+      <span class="small muted">"${esc(d.title)}"${d.paidAt ? ` · paid ${fmtWhen(d.paidAt)} · receipt: ${esc(d.receipt)}` : ""}</span></div>
+      ${d.receiptPhoto ? `<img class="thumb" src="${d.receiptPhoto}" alt="Receipt for ${esc(d.title)}">` : ""}</li>`).join("")}</ul></section>` : ""}
   </div>`;
 }
 
@@ -881,7 +885,8 @@ function viewSettings() {
       <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
       <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
       <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are only claims: a check-in counts when your witness signs it. Before they accept, proof is on your honor.</p>
-      <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
+      <p><b>Debts need proof.</b> A debt only clears with a receipt image or your witness's signed confirmation, and photo check-ins must be taken live with the camera, not picked from the gallery.</p>
+    <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
       <p class="small muted">Vow is free and has no subscription. It runs offline once loaded.</p>
     </section>
   </div>`;
@@ -920,6 +925,23 @@ function viewBail(p) {
     <div class="stack">
       <textarea class="share-link" id="b-link" aria-label="Walk-away link" readonly hidden></textarea>
       <button class="btn block" id="b-send" hidden>Send walk-away back</button>
+    </div>
+    <p class="small muted"><a href="#">Open Vow</a></p>
+  </section>`;
+}
+function viewPaid(p) {
+  const who = p.n || "Your friend";
+  const mine = loadWitnessing().find((w) => w.id === p.id);
+  return `<div class="hero"><h1>Payment check</h1></div>
+  <section class="card stack">
+    <p><b>${esc(who)}</b> says they paid <b>${esc(p.s)}</b> to ${esc(p.to)} for breaking <b>${esc(p.t)}</b>.</p>
+    <p>Only confirm if you've seen the payment, a receipt or the transfer. Your confirmation clears the debt.</p>
+    ${mine
+      ? `<button class="btn primary block" id="p-ok">I saw them pay, sign</button>`
+      : `<p class="pill warn">You aren't the witness for this vow, so you can't confirm the payment.</p>`}
+    <div class="stack">
+      <textarea class="share-link" id="p-link" aria-label="Payment confirmation link" readonly hidden></textarea>
+      <button class="btn block" id="p-send" hidden>Send confirmation back</button>
     </div>
     <p class="small muted"><a href="#">Open Vow</a></p>
   </section>`;
@@ -968,7 +990,10 @@ function route() {
   if (h.startsWith("#bail=")) {
     return "bail";
   }
-  if (h.startsWith("#accept=") || h.startsWith("#ok=") || h.startsWith("#bailok=")) {
+  if (h.startsWith("#paid=")) {
+    return "paid";
+  }
+  if (h.startsWith("#accept=") || h.startsWith("#ok=") || h.startsWith("#bailok=") || h.startsWith("#paidok=")) {
     return "inbound";
   }
   return { "#new": "new", "#history": "history", "#settings": "settings" }[h] || "home";
@@ -991,7 +1016,7 @@ function render() {
       a.removeAttribute("aria-current");
     }
   });
-  if (r === "invite" || r === "inbound" || r === "bail") {
+  if (r === "invite" || r === "inbound" || r === "bail" || r === "paid") {
     let payload;
     try {
       payload = JSON.parse(b64d(location.hash.slice(location.hash.indexOf("=") + 1)));
@@ -1001,7 +1026,30 @@ function render() {
     }
     if (r === "inbound") {
       view.innerHTML = `<div class="hero"><h1>Checking…</h1></div>`;
-      handleInbound(location.hash.startsWith("#accept=") ? "accept" : location.hash.startsWith("#bailok=") ? "bailok" : "ok", payload);
+      const h = location.hash;
+      handleInbound(h.startsWith("#accept=") ? "accept" : h.startsWith("#bailok=") ? "bailok" : h.startsWith("#paidok=") ? "paidok" : "ok", payload);
+      return;
+    }
+    if (r === "paid") {
+      view.innerHTML = viewPaid(payload);
+      const okBtn = $("#p-ok");
+      if (okBtn) {
+        okBtn.addEventListener("click", async () => {
+          const w = loadWitnessing().find((x) => x.id === payload.id);
+          if (!w) {
+            return;
+          }
+          const sig = await signProof(w.priv, payload.id, `paid:${payload.debt}`);
+          const link = appUrl(`paidok=${b64e(JSON.stringify({ id: payload.id, debt: payload.debt, sig }))}`);
+          const box = $("#p-link");
+          box.value = link;
+          box.hidden = false;
+          const send = $("#p-send");
+          send.hidden = false;
+          send.addEventListener("click", () => shareText(`I saw you pay for "${payload.t}". Open this to clear the debt: ${link}`));
+          toast("Signed. Send the confirmation back.");
+        });
+      }
       return;
     }
     if (r === "bail") {
@@ -1064,6 +1112,26 @@ async function handleInbound(kind, p) {
     render();
     toast(msg);
   };
+  if (kind === "paidok") {
+    const d = S.debts.find((x) => x.id === p.debt);
+    if (!d || d.vowId !== p.id) {
+      done("That payment link is for a debt that isn't on this device.");
+      return;
+    }
+    const { pub, who } = debtWitness(d);
+    if (!pub || !(await verifyProof(pub, p.id, `paid:${d.id}`, p.sig))) {
+      done("That payment confirmation isn't signed by your witness.");
+      return;
+    }
+    if (!d.paidAt) {
+      d.paidAt = now();
+      d.receipt = `confirmed by ${who}`;
+      d.paidBy = "witness";
+      save();
+    }
+    done(`Debt cleared. ${who} confirmed you paid.`);
+    return;
+  }
   if (!v) {
     done("That link belongs to a vow that isn't on this device.");
     return;
@@ -1243,31 +1311,51 @@ function confess(list) {
   });
 }
 
-function compressPhoto(file) {
+// Scale to 640 px and burn in a time stamp, so a proof image can't be passed off as another day's.
+function stampImage(source, width, height, label) {
+  const max = 640;
+  const sc = Math.min(1, max / Math.max(width, height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(width * sc);
+  c.height = Math.round(height * sc);
+  const g = c.getContext("2d");
+  g.drawImage(source, 0, 0, c.width, c.height);
+  g.font = "bold 16px system-ui, sans-serif";
+  const w = g.measureText(label).width + 16;
+  g.fillStyle = "rgba(0,0,0,.6)";
+  g.fillRect(8, c.height - 34, w, 26);
+  g.fillStyle = "#fff";
+  g.fillText(label, 16, c.height - 15);
+  return c.toDataURL("image/jpeg", 0.7);
+}
+
+function compressPhoto(file, prefix = "Vow") {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const max = 640;
-      const sc = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * sc);
-      c.height = Math.round(img.height * sc);
-      const g = c.getContext("2d");
-      g.drawImage(img, 0, 0, c.width, c.height);
-      const label = `Vow · ${fmtWhen(now())}`;
-      g.font = "bold 16px system-ui, sans-serif";
-      const w = g.measureText(label).width + 16;
-      g.fillStyle = "rgba(0,0,0,.6)";
-      g.fillRect(8, c.height - 34, w, 26);
-      g.fillStyle = "#fff";
-      g.fillText(label, 16, c.height - 15);
       URL.revokeObjectURL(url);
-      resolve(c.toDataURL("image/jpeg", 0.7));
+      resolve(stampImage(img, img.width, img.height, `${prefix} · ${fmtWhen(now())}`));
     };
     img.onerror = reject;
     img.src = url;
   });
+}
+
+// Photo proof is a live camera shot taken inside Vow: no gallery, no old pictures.
+async function startCamera(video) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("no camera");
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+  video.srcObject = stream;
+  await video.play();
+  return stream;
+}
+function stopCamera(stream) {
+  if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+  }
 }
 
 function keep(v, o, proof) {
@@ -1318,31 +1406,51 @@ function checkIn(v) {
     });
   } else if (v.proof === "photo") {
     openDialog(`<form class="stack" id="pf">${head}
-      <label class="field"><span>Take a photo of it</span><input type="file" id="pphoto" accept="image/*" capture="environment" required></label>
-      <p class="hint">Must be taken in the last 30 minutes. It's stamped with the time and stays on this device.</p>
-      <img id="pprev" class="thumb" alt="Photo preview" hidden style="width:100%;height:auto;max-height:260px">${foot("Submit proof")}</form>`, (d) => {
+      <div class="cam"><video id="pvideo" playsinline muted aria-label="Camera preview"></video>
+        <img id="pprev" alt="Photo you took" hidden></div>
+      <p class="hint" id="pcam-hint">Point your camera at it and take the photo now. Only a live shot counts, not a picture from your gallery. It's stamped with the time and stays on this device.</p>
+      <div class="row"><button type="button" class="btn" id="psnap" disabled>Take photo</button>
+        <button type="button" class="btn ghost" id="pretake" hidden>Retake</button></div>${foot("Submit proof")}</form>`, (d) => {
       let data = null;
-      $("#pphoto", d).addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) {
+      let stream = null;
+      const video = $("#pvideo", d);
+      const snap = $("#psnap", d);
+      const retake = $("#pretake", d);
+      const prev = $("#pprev", d);
+      dlg.addEventListener("close", () => stopCamera(stream), { once: true });
+      startCamera(video).then((s) => {
+        stream = s;
+        snap.disabled = false;
+      }).catch(() => {
+        video.hidden = true;
+        $("#pcam-hint", d).textContent = "Vow can't open a camera here. Allow camera access, or check in from your phone: photo proof only takes a live camera shot.";
+      });
+      snap.addEventListener("click", () => {
+        if (!video.videoWidth) {
           return;
         }
-        if (now() - file.lastModified > 30 * MIN) {
-          toast("That photo is older than 30 minutes. Take a new one.");
-          e.target.value = "";
-          return;
-        }
-        data = await compressPhoto(file);
-        $("#pprev", d).src = data;
-        $("#pprev", d).hidden = false;
+        data = stampImage(video, video.videoWidth, video.videoHeight, `Vow · ${fmtWhen(now())}`);
+        prev.src = data;
+        prev.hidden = false;
+        video.hidden = true;
+        snap.hidden = true;
+        retake.hidden = false;
+      });
+      retake.addEventListener("click", () => {
+        data = null;
+        prev.hidden = true;
+        video.hidden = false;
+        snap.hidden = false;
+        retake.hidden = true;
       });
       $("#pf", d).addEventListener("submit", (e) => {
         e.preventDefault();
         if (!data) {
-          toast("Add a photo first.");
+          toast("Take the photo first.");
           return;
         }
-        keep(v, o, { type: "photo", photo: data, at: now() });
+        stopCamera(stream);
+        keep(v, o, { type: "photo", photo: data, live: true, at: now() });
       });
     });
   } else if (v.proof === "witness") {
@@ -1431,7 +1539,8 @@ function walkAway(v) {
     $("#w-debt", d).addEventListener("click", () => {
       dlg.close();
       const p = schedule(v, "delete", null, "debt");
-      S.debts.push({ id: uid(), vowId: v.id, occId: null, title: v.title, amount: v.stake, to: v.to, at: now(), paidAt: null, receipt: "", bailout: p.id });
+      S.debts.push({ id: uid(), vowId: v.id, occId: null, title: v.title, amount: v.stake, to: v.to, at: now(), paidAt: null, receipt: "", bailout: p.id,
+        witness: v.witness || "", witnessPub: v.witnessPub || null });
       save();
       render();
       tellWitness("Walk-away — I owe", v, `I'm walking away from "${v.title}" and owe you ${money(v.stake)} for it. It applies in 24 hours; if I cancel before then, the debt is refunded.`);
@@ -1572,21 +1681,64 @@ async function act(kind, v) {
   }
 }
 
-async function payDebt(id) {
+function debtWitness(d) {
+  const v = S.vows.find((x) => x.id === d.vowId);
+  return { pub: d.witnessPub || (v && v.witnessPub) || null, who: d.witness || (v && v.witness) || "your witness", v };
+}
+
+// A debt clears only with proof: a receipt image, or the witness's signed confirmation.
+function payDebt(id) {
   const d = S.debts.find((x) => x.id === id);
-  const val = await ask({ title: `Paid ${money(d.amount)}?`, body: `Log how you paid ${esc(d.to)}: a transaction ID, receipt number or a short note.`, label: "Receipt or reference", ok: "Log payment" });
-  if (val === null) {
+  if (!d) {
     return;
   }
-  if (val.trim().length < 4) {
-    toast("Add a receipt or reference (4+ characters).");
-    return;
-  }
-  d.paidAt = now();
-  d.receipt = val.trim();
-  save();
-  render();
-  tellWitness("Debt settled", S.vows.find((v) => v.id === d.vowId), `I paid ${money(d.amount)} to ${d.to} for breaking "${d.title}". Receipt: ${d.receipt}.`);
+  const { pub, who, v } = debtWitness(d);
+  let photo = null;
+  openDialog(`<form class="stack" id="payf">
+    <h2 id="dlg-title">Paid ${money(d.amount)}?</h2>
+    <p class="muted small">A debt clears with proof: a screenshot or photo of the receipt for ${money(d.amount)} to ${esc(d.to)}${pub ? `, or ${esc(who)} confirming they saw you pay` : ""}.</p>
+    <label class="field"><span>Receipt image</span><input type="file" id="pay-img" accept="image/*"></label>
+    <img id="pay-prev" class="thumb" alt="Receipt preview" hidden style="width:100%;height:auto;max-height:260px">
+    <label class="field"><span>Reference <span class="muted small">(optional)</span></span><input type="text" id="pay-ref" maxlength="80" placeholder="Transaction ID or a short note"></label>
+    <div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary" id="pay-ok">Log payment</button></div>
+    ${pub ? `<div class="stack pay-alt"><p class="small">No receipt? Ask ${esc(who)} to confirm. Their phone signs it, so the debt clears when you open their link.</p>
+      <button type="button" class="btn block" id="pay-ask">Ask ${esc(who)} to confirm</button></div>` : ""}
+  </form>`, (dd) => {
+    $("#pay-img", dd).addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        return;
+      }
+      photo = await compressPhoto(file, "Receipt logged");
+      $("#pay-prev", dd).src = photo;
+      $("#pay-prev", dd).hidden = false;
+    });
+    $("#payf", dd).addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!photo) {
+        toast("Add a receipt image first (a screenshot of the transfer works).");
+        return;
+      }
+      d.paidAt = now();
+      d.receiptPhoto = photo;
+      d.receipt = $("#pay-ref", dd).value.trim() || "receipt image";
+      d.paidBy = "receipt";
+      save();
+      dlg.close();
+      render();
+      tellWitness("Debt settled", v, `I paid ${money(d.amount)} to ${d.to} for breaking "${d.title}". Receipt: ${d.receipt}.`);
+    });
+    const askBtn = $("#pay-ask", dd);
+    if (askBtn) {
+      askBtn.addEventListener("click", () => {
+        const payload = { id: d.vowId, debt: d.id, n: S.settings.name || "", t: d.title, s: money(d.amount), to: d.to };
+        const link = appUrl(`paid=${b64e(JSON.stringify(payload))}`);
+        d.askedAt = now();
+        save();
+        shareText(`I paid ${money(d.amount)} to ${d.to} for breaking "${d.title}". Can you confirm you saw it? ${link}`);
+      });
+    }
+  });
 }
 
 function wireSettings() {
