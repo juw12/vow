@@ -129,6 +129,56 @@ with sync_playwright() as pw:
     owner.wait_for_timeout(800)
     kept = next(x for x in state(owner)["vows"] if x["id"] == vid)["occ"][0]
     check("real witness confirmation keeps the vow", kept["status"] == "kept" and kept["proof"]["type"] == "witness")
+
+    # 7. walk-away: deleting a far-off vow asks the witness to sign off
+    bv = make_vow(owner, "Run the half marathon")  # In 1 week, witness proof
+    bl = owner.evaluate(f"witnessLink(S.vows.find(v => v.id === '{bv}'))")
+    witness.goto(bl)
+    witness.click("#w-accept")
+    witness.wait_for_selector("#share-link")
+    owner.goto(witness.locator("#share-link").input_value())  # witness accepts
+    owner.wait_for_timeout(800)
+    check("bail vow: owner has witness public key", state(owner)["vows"][-1].get("witnessPub") is not None)
+
+    # far-off delete offers the witness a sign-off, not a free type-DELETE
+    owner.goto(BASE)
+    owner.locator(f"[data-vow='{bv}'] summary").click()
+    owner.locator(f"[data-vow='{bv}'] button[data-act='delete']").click()
+    owner.wait_for_selector("#w-ask")
+    check("far-off delete offers witness sign-off", owner.locator("#w-ask").count() == 1)
+    owner.click("#w-ask")
+    owner.wait_for_function("document.querySelector('#bmsg') && document.querySelector('#bmsg').value.includes('#bail=')")
+    bail_link = owner.locator("#bmsg").input_value()
+
+    # witness signs the walk-away
+    witness.goto(bail_link)
+    witness.wait_for_selector("#b-allow")
+    witness.click("#b-allow")
+    witness.wait_for_function("document.querySelector('#b-link') && document.querySelector('#b-link').value.includes('#bailok=')")
+    bailok_link = witness.locator("#b-link").input_value()
+
+    # owner opens the signed walk-away -> pending delete scheduled
+    owner.goto(bailok_link)
+    owner.wait_for_timeout(800)
+    bvv = next(x for x in state(owner)["vows"] if x["id"] == bv)
+    bp = bvv.get("pending", [])
+    check("witness sign-off schedules the walk-away",
+          bvv["status"] == "active" and len(bp) == 1 and bp[0]["type"] == "delete" and bp[0].get("cost") == "witness")
+
+    # a forged walk-away signature is rejected (no pending delete)
+    bv2 = make_vow(owner, "Cycle 20 km")
+    bl2 = owner.evaluate(f"witnessLink(S.vows.find(v => v.id === '{bv2}'))")
+    witness.goto(bl2)
+    witness.click("#w-accept")
+    witness.wait_for_selector("#share-link")
+    owner.goto(witness.locator("#share-link").input_value())
+    owner.wait_for_timeout(800)
+    forged = owner.evaluate(f"b64e(JSON.stringify({{id: '{bv2}', sig: bytesB64u(new Uint8Array(64).fill(9))}}))")
+    owner.goto(BASE + "#bailok=" + forged)
+    owner.wait_for_timeout(800)
+    bv2s = next(x for x in state(owner)["vows"] if x["id"] == bv2)
+    check("forged walk-away rejected", bv2s["status"] == "active" and len(bv2s.get("pending", [])) == 0)
+
     check("no page errors", not errors)
     print(json.dumps({"all_pass": all(results.values()), "errors": errors[:3]}), flush=True)
     os._exit(0 if all(results.values()) else 1)

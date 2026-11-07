@@ -160,14 +160,39 @@ with sync_playwright() as pw:
     s = state(page)
     lowered_waits = s["vows"][0]["stake"] == 20 and len(s["vows"][0]["pending"]) == 1
     more(page, vid, "delete")
-    answer(page, "DELETE")
-    still_active = state(page)["vows"][0]["status"] == "active"
+    # a far-off vow can't be deleted for free: the walk-away dialog opens, not the type-DELETE ask
+    walk_open = page.locator("#w-debt").count() == 1 and page.locator("#askv").count() == 0
     shot(page, path=str(SHOTS / "04-pending-change.png"), full_page=True)
+    close_dialog(page)
     page.clock.fast_forward(24 * HOUR + 10 * MIN)
     s = state(page)
-    applied = s["vows"][0]["stake"] == 5 and s["vows"][0]["status"] == "deleted"
-    gate("G4 easing-delayed-24h", raised and lowered_waits and still_active and applied,
-         f"raised={raised} waits={lowered_waits} active={still_active} applied={applied}")
+    applied = s["vows"][0]["stake"] == 5 and s["vows"][0]["status"] == "active"
+    gate("G4 easing-delayed-24h", raised and lowered_waits and walk_open and applied,
+         f"raised={raised} waits={lowered_waits} walk={walk_open} applied={applied}")
+    ctx.close()
+
+    # G11 deleting a far-off vow costs: owe the stake, or the witness signs off --
+    ctx, page = fresh(browser)
+    far = make_vow(page, "Save money for a trip", when="In 1 week")
+    page.clock.fast_forward(11 * MIN)
+    more(page, far, "delete")
+    walk = page.locator("#w-debt").count() == 1 and page.locator("#askv").count() == 0
+    page.click("#w-debt")
+    page.clock.run_for(1500)
+    s = state(page)
+    fv = s["vows"][0]
+    debt_ok = any(d.get("bailout") and d["amount"] == 10 and not d["paidAt"] for d in s["debts"])
+    far_active = fv["status"] == "active" and len(fv["pending"]) == 1 and fv["pending"][0]["type"] == "delete"
+    close_dialog(page)
+    shot(page, path=str(SHOTS / "09-walkaway-debt.png"), full_page=True)
+    near = make_vow(page, "Pay the rent")
+    page.clock.fast_forward(11 * MIN)
+    more(page, near, "delete")
+    free = page.locator("#askv").count() == 1 and page.locator("#w-debt").count() == 0
+    answer(page, "DELETE")
+    near_active = state(page)["vows"][-1]["status"] == "active"
+    gate("G11 far-off-delete-costs", walk and debt_ok and far_active and free and near_active,
+         f"walk={walk} debt={debt_ok} faractive={far_active} free={free} near={near_active}")
     ctx.close()
 
     # G5 grace pass: before deadline only, 1 per 30 days ----------------

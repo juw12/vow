@@ -228,6 +228,7 @@ const LOCK = 24 * HOUR;
 const FREE_EDIT = 10 * MIN;
 const PASS_WINDOW = 30 * DAY;
 const DEBT_GRACE = 7 * DAY;
+const FAR_OFF = 3 * DAY;
 const ESCALATE_FACTOR = 1.5;
 const ESCALATE_CAP = 4;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -320,6 +321,12 @@ function nextDue(v, after) {
 }
 const openOcc = (v) => v.occ.find((o) => o.status === "open");
 const freeEdit = (v) => now() - v.createdAt < FREE_EDIT;
+// A vow is "far-off" when its next check-in is more than FAR_OFF away. Bailing out of one
+// then isn't free: you owe the stake, or your witness has to sign you off.
+function isFarOff(v) {
+  const o = openOcc(v);
+  return !!o && o.due - now() > FAR_OFF;
+}
 
 function addDebt(v, o) {
   const debt = { id: uid(), vowId: v.id, occId: o.id, title: v.title, amount: o.stake, to: v.to, at: o.due, paidAt: null, receipt: "" };
@@ -591,7 +598,11 @@ function vowCard(v) {
   const o = openOcc(v);
   const t = now();
   const pending = (v.pending || []).map((p) => {
-    const what = p.type === "lower" ? `Stake drops to ${money(p.value)}` : p.type === "push" ? `Deadline moves to ${fmtWhen(p.value)}` : "Vow will be deleted";
+    const what = p.type === "lower" ? `Stake drops to ${money(p.value)}`
+      : p.type === "push" ? `Deadline moves to ${fmtWhen(p.value)}`
+      : p.cost === "debt" ? "Vow will be deleted — you owe the stake"
+      : p.cost === "witness" ? "Vow will be deleted — witness signed off"
+      : "Vow will be deleted";
     return `<div class="pending row"><span>${what} in <b data-left="${p.at}">${fmtLeft(p.at - t)}</b></span><span class="spacer"></span>
       <button class="btn ghost" data-undo="${v.id}:${p.id}">Cancel change</button></div>`;
   }).join("");
@@ -621,6 +632,8 @@ function vowCard(v) {
         : `<button class="btn primary" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>`}
     </div>` : ""}
     ${pending}
+    ${v.bailoutAsked && !v.bailoutSignedAt && !(v.pending || []).some((p) => p.type === "delete")
+      ? `<div class="pending row"><span>Walk-away: waiting for ${esc(v.witness)} to sign off</span><span class="spacer"></span><button class="btn ghost" data-wa-resend="${v.id}">Resend</button><button class="btn ghost" data-wa-cancel="${v.id}">Cancel</button></div>` : ""}
     ${freeEdit(v) ? `<p class="small muted row" style="margin:0">Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>. <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
     <details class="more"><summary>More options</summary>
       <div class="actions">
@@ -894,6 +907,23 @@ function viewInvite(p) {
     <p class="small muted"><a href="#">Open Vow</a></p>
   </section>`;
 }
+function viewBail(p) {
+  const who = p.n || "Your friend";
+  const mine = loadWitnessing().find((w) => w.id === p.id);
+  return `<div class="hero"><h1>Walk-away request</h1></div>
+  <section class="card stack">
+    <p><b>${esc(who)}</b> wants to walk away from <b>${esc(p.t)}</b>${p.left ? ` — <b>${esc(p.left)}</b> of commitment left` : ""}.</p>
+    <p>If you let them off, they won't owe the <b>${esc(p.s)}</b> stake to ${esc(p.to)}. This is your call to make, and only you can make it.</p>
+    ${mine
+      ? `<button class="btn primary block" id="b-allow">Let them off the hook</button>`
+      : `<p class="pill warn">You aren't the witness for this vow, so you can't sign a walk-away.</p>`}
+    <div class="stack">
+      <textarea class="share-link" id="b-link" aria-label="Walk-away link" readonly hidden></textarea>
+      <button class="btn block" id="b-send" hidden>Send walk-away back</button>
+    </div>
+    <p class="small muted"><a href="#">Open Vow</a></p>
+  </section>`;
+}
 function witnessSection() {
   const list = loadWitnessing();
   if (!list.length) {
@@ -935,7 +965,10 @@ function route() {
   if (h.startsWith("#invite=")) {
     return "invite";
   }
-  if (h.startsWith("#accept=") || h.startsWith("#ok=")) {
+  if (h.startsWith("#bail=")) {
+    return "bail";
+  }
+  if (h.startsWith("#accept=") || h.startsWith("#ok=") || h.startsWith("#bailok=")) {
     return "inbound";
   }
   return { "#new": "new", "#history": "history", "#settings": "settings" }[h] || "home";
@@ -958,7 +991,7 @@ function render() {
       a.removeAttribute("aria-current");
     }
   });
-  if (r === "invite" || r === "inbound") {
+  if (r === "invite" || r === "inbound" || r === "bail") {
     let payload;
     try {
       payload = JSON.parse(b64d(location.hash.slice(location.hash.indexOf("=") + 1)));
@@ -968,7 +1001,29 @@ function render() {
     }
     if (r === "inbound") {
       view.innerHTML = `<div class="hero"><h1>Checking…</h1></div>`;
-      handleInbound(location.hash.startsWith("#accept=") ? "accept" : "ok", payload);
+      handleInbound(location.hash.startsWith("#accept=") ? "accept" : location.hash.startsWith("#bailok=") ? "bailok" : "ok", payload);
+      return;
+    }
+    if (r === "bail") {
+      view.innerHTML = viewBail(payload);
+      const allow = $("#b-allow");
+      if (allow) {
+        allow.addEventListener("click", async () => {
+          const w = loadWitnessing().find((x) => x.id === payload.id);
+          if (!w) {
+            return;
+          }
+          const sig = await signProof(w.priv, payload.id, "bail");
+          const link = appUrl(`bailok=${b64e(JSON.stringify({ id: payload.id, sig }))}`);
+          const box = $("#b-link");
+          box.value = link;
+          box.hidden = false;
+          const send = $("#b-send");
+          send.hidden = false;
+          send.addEventListener("click", () => shareText(`I let you off "${payload.t}". Open this to close it out: ${link}`));
+          toast("Signed. Send the walk-away back.");
+        });
+      }
       return;
     }
     view.innerHTML = viewInvite(payload);
@@ -1022,6 +1077,23 @@ async function handleInbound(kind, p) {
   }
   if (!v.witnessPub) {
     done("Your witness hasn't accepted yet, so this can't be checked.");
+    return;
+  }
+  if (kind === "bailok") {
+    const signed = await verifyProof(v.witnessPub, v.id, "bail", p.sig);
+    if (!signed) {
+      done("That walk-away isn't signed by your witness.");
+      return;
+    }
+    // Idempotent: the signed walk-away may be opened (or the link re-fired) more than once —
+    // schedule the delete exactly once.
+    const already = (v.pending || []).some((pp) => pp.type === "delete" && pp.cost === "witness");
+    if (!already) {
+      v.bailoutSignedAt = now();
+      delete v.bailoutAsked;
+      schedule(v, "delete", null, "witness");
+    }
+    done(`Your witness let you off. "${v.title}" will be deleted in 24 hours.`);
     return;
   }
   const ok = await verifyProof(v.witnessPub, v.id, p.d, p.sig);
@@ -1315,12 +1387,65 @@ function checkIn(v) {
   }
 }
 
-function schedule(v, type, value) {
+function schedule(v, type, value, cost) {
   v.pending = v.pending || [];
-  v.pending.push({ id: uid(), type, value, at: now() + LOCK });
+  const p = { id: uid(), type, value, at: now() + LOCK };
+  if (cost) {
+    p.cost = cost;
+  }
+  v.pending.push(p);
   save();
   render();
   toast("Scheduled. It applies in 24 hours.");
+  return p;
+}
+
+function bailPayload(v) {
+  const o = openOcc(v);
+  return { id: v.id, t: v.title, n: S.settings.name || "", to: v.to, s: money(v.stake), left: o ? fmtLeft(o.due - now()) : "" };
+}
+function bailLink(v) {
+  return appUrl(`bail=${b64e(JSON.stringify(bailPayload(v)))}`);
+}
+function offerBail(v) {
+  openDialog(`<div class="stack">
+    <h2 id="dlg-title">Ask ${esc(v.witness)} to let you off</h2>
+    <p class="muted small">This vow is still far out, so it can't be deleted for free. Only ${esc(v.witness)} can sign a walk-away.</p>
+    <textarea id="bmsg" aria-label="Walk-away request" readonly>${esc(bailLink(v))}</textarea>
+    <div class="row"><button class="btn ghost" data-close>Not now</button><span class="spacer"></span><button class="btn primary" id="bmsend">Send walk-away request</button></div>
+  </div>`, (d) => {
+    $("#bmsend", d).addEventListener("click", () => shareText(`I want to walk away from "${v.title}" before the deadline. Please sign off: ${bailLink(v)}`));
+  });
+}
+function walkAway(v) {
+  const canAsk = !!v.witnessPub;
+  openDialog(`<form class="stack" id="wf">
+    <h2 id="dlg-title">Walk away?</h2>
+    <p class="muted small">This vow is still far out, so bailing isn't free. Pick how you exit:</p>
+    <button type="button" class="btn block" id="w-debt">Owe ${money(v.stake)} to ${esc(v.to)}</button>
+    ${canAsk
+      ? `<button type="button" class="btn block" id="w-ask">Ask ${esc(v.witness)} to let me off</button>`
+      : `<p class="small muted">Your witness hasn't accepted yet, so only the debt option is open.</p>`}
+    <p class="small muted row" style="margin:0"><button type="button" class="btn ghost" data-close>Keep the vow</button></p>
+  </form>`, (d) => {
+    $("#w-debt", d).addEventListener("click", () => {
+      dlg.close();
+      const p = schedule(v, "delete", null, "debt");
+      S.debts.push({ id: uid(), vowId: v.id, occId: null, title: v.title, amount: v.stake, to: v.to, at: now(), paidAt: null, receipt: "", bailout: p.id });
+      save();
+      render();
+      tellWitness("Walk-away — I owe", v, `I'm walking away from "${v.title}" and owe you ${money(v.stake)} for it. It applies in 24 hours; if I cancel before then, the debt is refunded.`);
+    });
+    if (canAsk) {
+      $("#w-ask", d).addEventListener("click", () => {
+        dlg.close();
+        v.bailoutAsked = now();
+        save();
+        render();
+        offerBail(v);
+      });
+    }
+  });
 }
 
 function icsFor(v) {
@@ -1390,6 +1515,10 @@ async function act(kind, v) {
     }
     schedule(v, "push", ms);
   } else if (kind === "delete") {
+    if (isFarOff(v)) {
+      walkAway(v);
+      return;
+    }
     const val = await ask({ title: "Delete this vow?", body: "Deleting waits 24 hours, and any deadline before then still counts. Debts you already owe stay.", label: "Type DELETE to confirm", ok: "Schedule delete" });
     if (val === null) {
       return;
@@ -1532,10 +1661,27 @@ document.addEventListener("click", (e) => {
     confirmProof(t.dataset.confirm);
   } else if (t.dataset.pay) {
     payDebt(t.dataset.pay);
+  } else if (t.dataset.waResend) {
+    const v = find(t.dataset.waResend);
+    if (v) {
+      offerBail(v);
+    }
+  } else if (t.dataset.waCancel) {
+    const v = find(t.dataset.waCancel);
+    if (v) {
+      delete v.bailoutAsked;
+      save();
+      render();
+      toast("Walk-away cancelled. The vow stands.");
+    }
   } else if (t.dataset.undo) {
     const [vid, pid] = t.dataset.undo.split(":");
     const v = find(vid);
-    v.pending = v.pending.filter((p) => p.id !== pid);
+    const pend = (v.pending || []).find((x) => x.id === pid);
+    v.pending = v.pending.filter((x) => x.id !== pid);
+    if (pend && pend.cost === "debt") {
+      S.debts = S.debts.filter((d) => !(d.bailout === pid && !d.paidAt));
+    }
     save();
     render();
     toast("Change cancelled. The vow stands.");
