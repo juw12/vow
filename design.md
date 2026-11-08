@@ -70,3 +70,21 @@ Banned words: supercharge, seamless, unlock, next-level, effortless, magic, revo
 - Filled pastel chips for every attribute; identical shadowed cards in a grid.
 - Centred-everything layouts, fake testimonials or logos, stock 3D blobs.
 - "Get started" as the only call to action.
+
+## v7 additions (professional polish, 2026-11-08)
+- **Icons**: line SVG only (`.ic`, 1.8 stroke, currentColor). No emoji or arrow glyphs anywhere in the UI.
+- **Navigation**: header links with icon + label on tablet/desktop; below 640 px a fixed bottom tab bar
+  (3 equal tabs, 52 px targets, active tab in seal colour).
+- **Layout**: Home, History and Settings use `.layout` = `.main` + `aside.side`. At 1024 px+ the wrap is
+  1080 px with a 1fr / 340 px grid and a sticky side column; single-column views stay at 760 px.
+- **Vow card meta** (`dl.meta`): Stake / Proof / Witness as a ruled 3-column grid (2 + 1 on phone);
+  uppercase 11.5 px labels, 14.5 px values, stake amount in seal.
+- **More options** (`.menu`): a bordered list of `.menu-item` rows; "Delete vow" sits apart at the
+  bottom in seal, separated by a 6 px band. Delete and Erase still require typing DELETE / ERASE.
+- **Danger zone**: Settings has its own "Erase data" card with seal heading and border.
+- **New vow**: idea chips under "I will", one "Deadline, stake and proof" summary tile with "Change",
+  and a "What happens next" steps card in the side column.
+- **History**: story sentence in the hero; heatmap with fluid cells and a swatch legend in the side column.
+- **Check-in (photo)**: 4:3 camera frame with a "Camera preview" placeholder, full-width Take photo.
+- Tried and not kept (council ties): 40 px owed amount, quiet record band, inline meta, grouped menu,
+  secondary Check in when the deadline is far. See `hone/refine_log.md`.

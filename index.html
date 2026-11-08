@@ -217,6 +217,118 @@ details.more[open] summary::after { transform: translateY(2px) rotate(-135deg); 
 @media (prefers-reduced-motion: reduce) { details.more summary::after { transition: none; } }
 @media (max-width: 560px) { .stat:nth-child(n+3) { border-top: 1px solid var(--line); } .hero h1 { font-size: 28px; } }
 
+/* ---- v7: professional polish (see design.md) ---- */
+.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+nav.tabs a { display: inline-flex; align-items: center; gap: 7px; }
+nav.tabs .ic { width: 18px; height: 18px; }
+.hero { padding: 28px 0 18px; }
+.hero p { margin: 6px 0 0; }
+.hero .story { font: 500 17px/1.5 var(--serif); color: var(--muted); max-width: 60ch; }
+h2 { font-size: 20px; letter-spacing: -.005em; }
+.card { padding: 20px; }
+.layout { display: grid; gap: 16px; align-items: start; }
+.layout > * { min-width: 0; }
+.stats { background: var(--card); border: 1px solid var(--line); border-top: 2px solid var(--ink); border-radius: 0 0 var(--radius) var(--radius); padding: 0 14px; }
+.stat { padding: 14px 4px; }
+/* vow card */
+.vow-card { padding: 20px 20px 8px; }
+.vow-card .title { font-size: 21px; }
+.meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.meta > div { padding: 10px 12px 10px 0; min-width: 0; }
+.meta > div + div { padding-left: 12px; border-left: 1px solid var(--line); }
+.meta dt { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.meta dd { margin: 0; font-size: 14.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.meta .stake-amt { color: var(--seal); }
+.meta .ok { display: block; color: var(--kept); font-size: 13px; font-weight: 600; }
+.meta .pill { font-size: 13px; padding: 2px 8px; margin-top: 2px; cursor: pointer; color: var(--warn); }
+.vow-card .countdown { font-size: 30px; }
+.vow-card details.more { border-top: 1px solid var(--line); margin-top: 14px; }
+.vow-card details.more summary { width: 100%; font-size: 14.5px; }
+.menu { display: flex; flex-direction: column; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.menu-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 46px;
+  padding: 10px 14px; background: var(--card); border: 0; border-top: 1px solid var(--line); text-align: left;
+  font-weight: 500; cursor: pointer;
+}
+.menu-item:first-child { border-top: 0; }
+.menu-item:hover { background: var(--soft); }
+.menu-item.danger { color: var(--seal); border-top: 6px solid var(--soft); font-weight: 600; }
+.menu-note { font-size: 13px; color: var(--muted); font-weight: 400; }
+/* owed */
+.owed h2 { font-size: 22px; }
+.owed .list li { align-items: center; }
+/* new vow form */
+.chips.ideas { margin-top: -4px; }
+.chips.ideas button { font-size: 14px; min-height: 36px; padding: 6px 12px; font-weight: 500; color: var(--muted); }
+.field .hint { display: block; font-weight: 400; margin-top: 6px; }
+details.opts { border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+details.opts > summary { width: 100%; justify-content: space-between; gap: 12px; padding: 10px 0; color: var(--ink); font-weight: 400; }
+details.opts > summary::after { display: none; }
+.opts-text { display: flex; flex-direction: column; min-width: 0; }
+.opts-label { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+#opts-sum { font-weight: 600; font-size: 15px; }
+.opts-edit { color: var(--seal); font-weight: 600; font-size: 14.5px; flex: none; }
+details.opts[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+details.opts[open] .opts-edit { color: var(--muted); }
+.seal-note { margin: 0; font-size: 13.5px; color: var(--muted); }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: 14.5px; }
+.steps b { display: block; }
+/* history */
+.heat { grid-template-rows: repeat(7, auto); grid-auto-columns: minmax(0, 1fr); gap: 4px; max-width: 420px; }
+.heat span { aspect-ratio: 1; border-radius: 3px; }
+.legend-row { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.legend-row li { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 11px; height: 11px; border-radius: 3px; background: var(--soft); border: 1px solid var(--line); display: inline-block; }
+.sw.kept { background: var(--kept); border-color: var(--kept); }
+.sw.broken { background: var(--seal); border-color: var(--seal); }
+.sw.excused { background: var(--warn); border-color: var(--warn); }
+.list li .pill { font-size: 12.5px; padding: 1px 8px; margin-left: 4px; vertical-align: 1px; }
+/* settings */
+.danger-zone { border-color: color-mix(in srgb, var(--seal) 35%, var(--line)); }
+.danger-zone h2 { color: var(--seal); }
+.btn.danger { border-color: color-mix(in srgb, var(--seal) 45%, var(--line)); }
+.about p { margin: 0; font-size: 15px; }
+.about p + p { margin-top: 10px; }
+/* dialogs */
+dialog { border-radius: 16px; padding: 24px; }
+dialog h2 { font-size: 22px; }
+.cam { position: relative; aspect-ratio: 4 / 3; border-radius: 12px; background: var(--soft); overflow: hidden; display: grid; place-items: center; }
+.cam::before { content: "Camera preview"; color: var(--muted); font-size: 14px; }
+.cam video, .cam img { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; background: transparent; border-radius: 0; }
+input[type=file] { font-size: 14px; max-width: 100%; }
+input[type=file]::file-selector-button {
+  font: inherit; font-weight: 600; margin-right: 12px; padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--ink); }
+/* phone: bottom tab bar */
+@media (max-width: 639px) {
+  header.top .wrap { padding-top: 12px; padding-bottom: 12px; }
+  nav.tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    background: var(--card); border-top: 1px solid var(--line); padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+  }
+  nav.tabs a { flex-direction: column; gap: 2px; padding: 6px 4px; border-radius: 10px; font-size: 12px; justify-content: center; min-height: 52px; }
+  nav.tabs .ic { width: 22px; height: 22px; }
+  nav.tabs a[aria-current="page"] { background: none; color: var(--seal); }
+  .wrap { padding-bottom: 104px; }
+  .toast { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .brand b { display: inline; }
+  .meta { grid-template-columns: 1fr 1fr; }
+  .meta > div:nth-child(3) { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+}
+/* desktop: deliberate two-column layout */
+@media (min-width: 1024px) {
+  .wrap { max-width: 1080px; padding-left: 32px; padding-right: 32px; }
+  main.wrap:not(:has(> .layout)) { max-width: 760px; }
+  .layout { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; }
+  .layout > .side { grid-column: 2; grid-row: 1; position: sticky; top: 84px; }
+  .layout > .main { grid-column: 1; grid-row: 1; }
+  .side .stats { grid-template-columns: 1fr 1fr; }
+  .side .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .hero { padding-top: 36px; }
+  .hero h1 { font-size: 34px; }
+}
 </style>
 </head>
 <body>
@@ -227,9 +339,9 @@ details.more[open] summary::after { transform: translateY(2px) rotate(-135deg); 
       <b>Vow</b>
     </a>
     <nav class="tabs" aria-label="Main">
-      <a href="#" data-route="home">Vows</a>
-      <a href="#history" data-route="history">History</a>
-      <a href="#settings" data-route="settings">Settings</a>
+      <a href="#" data-route="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg><span>Vows</span></a>
+      <a href="#history" data-route="history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>History</span></a>
+      <a href="#settings" data-route="settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></a>
     </nav>
   </div>
 </header>
@@ -982,15 +1094,14 @@ function vowCard(v) {
       <h3 class="title">${esc(v.title)}</h3>
       <div class="muted small">${esc(scheduleText(v))}</div>
     </div>
-    <div class="chip-row">
-      <span class="pill stake">${money(v.stake)} → ${esc(v.to)}</span>
-      <span class="pill">Proof: ${proofLabel[v.proof]}${v.proof === "timer" ? ` ${v.timerMin} min` : ""}</span>
-      ${!v.witness ? ""
-        : v.witnessPub ? `<span class="pill kept">Witness: ${esc(v.witness)}, accepted</span>`
-        : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}" style="cursor:pointer">Waiting for ${esc(v.witness)} to accept</button>`
-        : `<button class="pill warn" data-act="witness" data-id="${v.id}" style="cursor:pointer">Send invite to ${esc(v.witness)}</button>`}
-      ${v.escalate ? `<span class="pill">×1.5 on miss</span>` : ""}
-    </div>
+    <dl class="meta">
+      <div><dt>Stake</dt><dd><b class="stake-amt">${money(v.stake)}</b> to ${esc(v.to)}${v.escalate ? ` <span class="muted">(x1.5 on miss)</span>` : ""}</dd></div>
+      <div><dt>Proof</dt><dd>${proofLabel[v.proof]}${v.proof === "timer" ? `, ${v.timerMin} min` : ""}</dd></div>
+      <div><dt>Witness</dt><dd>${!v.witness ? `<span class="muted">None</span>`
+        : v.witnessPub ? `${esc(v.witness)} <span class="ok">Accepted</span>`
+        : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}">Waiting for ${esc(v.witness)}</button>`
+        : `<button class="pill warn" data-act="witness" data-id="${v.id}">Send invite to ${esc(v.witness)}</button>`}</dd></div>
+    </dl>
     ${v.plan ? `<p class="small" style="margin:0"><b>Plan:</b> ${esc(v.plan)}</p>` : ""}
     ${vowTrail(v)}
     ${o ? `<div class="row">
@@ -1006,14 +1117,14 @@ function vowCard(v) {
       ? `<div class="pending row"><span>Walk-away: waiting for ${esc(v.witness)} to sign off</span><span class="spacer"></span><button class="btn ghost" data-wa-resend="${v.id}">Resend</button><button class="btn ghost" data-wa-cancel="${v.id}">Cancel</button></div>` : ""}
     ${freeEdit(v) ? `<p class="small muted row" style="margin:0"><span>Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>.</span> <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
     <details class="more"><summary>More options</summary>
-      <div class="actions">
-        <button class="btn" data-act="raise" data-id="${v.id}">Raise stake</button>
-        <button class="btn" data-act="lower" data-id="${v.id}">Lower stake</button>
-        ${v.kind === "once" ? `<button class="btn" data-act="push" data-id="${v.id}">Push deadline</button>` : ""}
-        <button class="btn" data-act="pass" data-id="${v.id}">Life happens pass</button>
-        <button class="btn" data-act="witness" data-id="${v.id}">Send to witness</button>
-        <button class="btn" data-act="ics" data-id="${v.id}">Add to calendar</button>
-        <button class="btn danger" data-act="delete" data-id="${v.id}">Delete vow</button>
+      <div class="menu" role="group" aria-label="Vow options">
+        <button class="menu-item" data-act="raise" data-id="${v.id}">Raise stake</button>
+        <button class="menu-item" data-act="lower" data-id="${v.id}">Lower stake</button>
+        ${v.kind === "once" ? `<button class="menu-item" data-act="push" data-id="${v.id}">Push deadline</button>` : ""}
+        <button class="menu-item" data-act="pass" data-id="${v.id}">Use a life-happens pass <span class="menu-note">1 per 30 days</span></button>
+        <button class="menu-item" data-act="witness" data-id="${v.id}">Send to witness</button>
+        <button class="menu-item" data-act="ics" data-id="${v.id}">Add to calendar</button>
+        <button class="menu-item danger" data-act="delete" data-id="${v.id}">Delete vow</button>
       </div>
     </details>
   </article>`;
@@ -1050,7 +1161,8 @@ function viewHome() {
     </section>`;
   }
   return `<div class="hero row"><h1>Your vows</h1><span class="spacer"></span><a class="btn primary" href="#new">New vow</a></div>
-    <div class="stack">
+    <div class="layout">
+    <aside class="side stack">
       ${owedBanner()}
       <section class="stats" aria-label="Your record">
         <div class="stat"><b>${st.kept}</b><span>kept</span></div>
@@ -1058,8 +1170,11 @@ function viewHome() {
         <div class="stat"><b>${st.streak}</b><span>streak (best ${st.best})</span></div>
         <div class="stat"><b>${money(st.saved)}</b><span>stakes kept safe</span></div>
       </section>
+    </aside>
+    <div class="main stack">
       ${active.length ? active.map(vowCard).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
       ${witnessSection()}
+    </div>
     </div>`;
 }
 
@@ -1080,16 +1195,17 @@ function viewNew() {
   tomorrow.setHours(9, 0, 0, 0);
   const week = t + 7 * DAY;
   const ideas = ["Go to the gym", "Write 500 words", "Study for 1 hour", "Run 5 km"];
-  return `<div class="hero"><h1>Make a vow</h1><p class="muted">About 30 seconds. Defaults are fine.</p></div>
-  <form id="newf" class="card stack" novalidate>
+  return `<div class="hero"><h1>Make a vow</h1><p class="muted">About 30 seconds. The defaults are fine.</p></div>
+  <div class="layout">
+  <form id="newf" class="card stack main" novalidate>
     <label class="field"><span>I will…</span>
       <input type="text" id="f-title" maxlength="80" placeholder="go to the gym for 45 minutes" required autocomplete="off"></label>
+    <div class="chips ideas" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
     <label class="field"><span>Witness</span>
-      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required></label>
-    <p class="hint" style="margin-top:-6px">They accept on their phone. Only they can confirm your proof.</p>
-    <div class="chips" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
+      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required aria-describedby="f-witness-hint">
+      <span class="hint" id="f-witness-hint">They accept on their phone. Only they can confirm your proof.</span></label>
 
-    <details class="more" id="opts"><summary id="opts-sum">Tonight · $10 to a charity · photo proof · change</summary>
+    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label">Deadline, stake and proof</span><span id="opts-sum">Tonight · $10 to a charity · Photo proof</span></span><span class="opts-edit">Change</span></summary>
     <div class="stack" style="margin-top:8px">
     <fieldset><legend class="legend">How often</legend>
       <div class="chips">
@@ -1154,13 +1270,21 @@ function viewNew() {
       </div>
     </details>
 
-    <ul class="rules">
-      <li><b>Raise</b> the stake any time. It applies instantly.</li>
-      <li><b>Lower, delay or delete</b> takes 24 hours to apply.</li>
-      <li>Typos in the wording can be fixed for 10 minutes.</li>
-    </ul>
+    <p class="seal-note">Once sealed, raising the stake is instant. Lowering, delaying or deleting takes 24 hours.</p>
     <button class="btn primary block" id="seal-btn">Seal my vow</button>
-  </form>`;
+  </form>
+  <aside class="side stack">
+    <section class="card stack note-card">
+      <h2>What happens next</h2>
+      <ol class="steps">
+        <li><b>Your witness accepts.</b> They get a link and confirm on their phone.</li>
+        <li><b>Show proof before the deadline.</b> Nothing else happens. The stake stays yours.</li>
+        <li><b>Miss it and you owe the stake.</b> You pay the cause yourself and log the receipt.</li>
+      </ol>
+      <p class="small muted">Typos in the wording can be fixed for 10 minutes after sealing.</p>
+    </section>
+  </aside>
+  </div>`;
 }
 
 function heatmap() {
@@ -1187,7 +1311,7 @@ function heatmap() {
   }
   return `<section class="card stack"><h2>Last 12 weeks</h2>
     <div class="heat" role="img" aria-label="Calendar of kept, broken and excused days over the last 12 weeks">${cells.join("")}</div>
-    <p class="small muted">Green kept · red broken · amber excused</p></section>`;
+    <ul class="legend-row small muted" aria-hidden="true"><li><i class="sw kept"></i>Kept</li><li><i class="sw broken"></i>Broken</li><li><i class="sw excused"></i>Excused</li><li><i class="sw"></i>No vow</li></ul></section>`;
 }
 
 function viewHistory() {
@@ -1200,9 +1324,9 @@ function viewHistory() {
   const story = m.kept + m.broken + m.excused === 0
     ? `Nothing settled in ${monthName} yet. Your first kept vow starts the story.`
     : `In ${monthName} you kept ${m.kept} ${m.kept === 1 ? "promise" : "promises"}${m.broken ? ` and broke ${m.broken}` : ""}${m.excused ? ` (${m.excused} excused)` : ""}. Best streak so far: ${st.best}.`;
-  return `<div class="hero"><h1>History</h1></div>
-  <div class="stack">
-    <p class="story">${story}</p>
+  return `<div class="hero"><h1>History</h1><p class="story">${story}</p></div>
+  <div class="layout">
+  <aside class="side stack">
     ${heatmap()}
     <section class="stats" aria-label="Totals">
       <div class="stat"><b>${st.kept}</b><span>kept</span></div>
@@ -1210,7 +1334,9 @@ function viewHistory() {
       <div class="stat"><b>${money(st.paid)}</b><span>paid to causes</span></div>
       <div class="stat"><b>${money(st.owed)}</b><span>still owed</span></div>
     </section>
-    <section class="card">
+  </aside>
+  <div class="main stack">
+    <section class="card stack"><h2>Check-ins</h2>
       ${items.length ? `<ul class="list">${items.map(({ v, o }) => `<li>
         ${o.proof && o.proof.photo ? `<img class="thumb" src="${o.proof.photo}" alt="Proof photo for ${esc(v.title)}">` : ""}
         <div style="flex:1;min-width:0"><b>${esc(v.title)}</b> <span class="pill ${o.status}">${label[o.status]}</span><br>
@@ -1221,14 +1347,17 @@ function viewHistory() {
       <b>${money(d.amount)}</b> to ${esc(d.to)} <span class="pill ${d.paidAt ? "kept" : "broken"}">${d.paidAt ? "Paid" : "Unpaid"}</span><br>
       <span class="small muted">"${esc(d.title)}"${d.paidAt ? ` · paid ${fmtWhen(d.paidAt)} · receipt: ${esc(d.receipt)}` : ""}</span></div>
       ${d.receiptPhoto ? `<img class="thumb" src="${d.receiptPhoto}" alt="Receipt for ${esc(d.title)}">` : ""}</li>`).join("")}</ul></section>` : ""}
+  </div>
   </div>`;
 }
 
 function viewSettings() {
   const s = S.settings;
   return `<div class="hero"><h1>Settings</h1></div>
-  <div class="stack">
+  <div class="layout">
+  <div class="main stack">
     <section class="card stack">
+      <h2>Preferences</h2>
       <label class="field"><span>Your name <span class="muted small">(shown to your witness)</span></span>
         <input type="text" id="s-name" value="${esc(s.name)}" maxlength="40"></label>
       <label class="field"><span>Currency symbol</span>
@@ -1238,16 +1367,22 @@ function viewSettings() {
       </div></fieldset>
     </section>
     <section class="card stack">
-      <h2>Your data</h2>
-      <p class="small muted">Everything lives on this device only. Back it up now and then.</p>
+      <h2>Backup</h2>
+      <p class="small muted">Everything lives on this device only. Export a backup now and then.</p>
       <div class="row">
         <button class="btn" id="export">Export backup</button>
         <label class="btn" for="import-file">Import backup</label>
         <input type="file" id="import-file" accept="application/json,.json" class="sr">
-        <button class="btn danger" id="erase">Erase everything</button>
       </div>
     </section>
-    <section class="card stack">
+    <section class="card stack danger-zone">
+      <h2>Erase data</h2>
+      <p class="small muted">Deletes every vow, debt and witness key on this device. This can't be undone.</p>
+      <div class="row"><button class="btn danger" id="erase">Erase everything</button></div>
+    </section>
+  </div>
+  <aside class="side stack">
+    <section class="card stack about">
       <h2>How Vow works</h2>
       <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
       <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
@@ -1256,6 +1391,7 @@ function viewSettings() {
     <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
       <p class="small muted">Vow is free and has no subscription. It runs offline once loaded.</p>
     </section>
+  </aside>
   </div>`;
 }
 
@@ -1572,7 +1708,7 @@ function wireNew() {
       ? (f.when.value === "custom" ? "custom deadline" : $(`input[name=when][value="${f.when.value}"]`, f).nextElementSibling.textContent)
       : "repeats";
     const stakeText = f.stake.value === "custom" ? money(Number($("#f-stake").value) || 0) : money(Number(f.stake.value));
-    $("#opts-sum").textContent = `${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"} · ${proofLabel[f.proof.value].toLowerCase()} proof · change`;
+    $("#opts-sum").textContent = `${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"} · ${proofLabel[f.proof.value]} proof`;
   };
   f.addEventListener("input", sync);
   f.addEventListener("change", (e) => {
@@ -1784,7 +1920,7 @@ function checkIn(v) {
       <div class="cam"><video id="pvideo" playsinline muted aria-label="Camera preview"></video>
         <img id="pprev" alt="Photo you took" hidden></div>
       <p class="hint" id="pcam-hint">Point your camera at it and take the photo now. Only a live shot counts, not a picture from your gallery. It's stamped with the time and stays on this device.</p>
-      <div class="row"><button type="button" class="btn" id="psnap" disabled>Take photo</button>
+      <div class="row"><button type="button" class="btn block" id="psnap" disabled>Take photo</button>
         <button type="button" class="btn ghost" id="pretake" hidden>Retake</button></div>${foot("Submit proof")}</form>`, (d) => {
       let data = null;
       let stream = null;
