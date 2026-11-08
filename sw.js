@@ -1,4 +1,4 @@
-const CACHE = "vow-v6";
+const CACHE = "vow-v8";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (event) => {

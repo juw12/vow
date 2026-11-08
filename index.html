@@ -329,6 +329,92 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { border-color
   .hero { padding-top: 36px; }
   .hero h1 { font-size: 34px; }
 }
+
+/* ---- v8 (hone run 2): structure ---- */
+.eyebrow { margin: 0; font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.btn.secondary { background: var(--card); color: var(--ink); border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--line)); }
+.btn.secondary:hover { border-color: var(--ink); }
+.btn .ic { width: 18px; height: 18px; }
+.home-hero { align-items: flex-end; }
+.hero-sub { margin: 4px 0 0; font-size: 14.5px; color: var(--muted); }
+.hero-sub b { color: var(--ink); font-variant-numeric: tabular-nums; }
+/* vow card */
+.vow-card { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.vow-card.lead { border-color: color-mix(in srgb, var(--seal) 35%, var(--line)); box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 6px 20px -12px color-mix(in srgb, var(--seal) 45%, transparent); }
+.vow-card.lead .eyebrow { color: var(--seal); margin-bottom: -6px; }
+.vc-head { display: flex; align-items: flex-start; gap: 16px; }
+.vc-title { flex: 1; min-width: 0; }
+.vc-title .title { margin: 0 0 2px; }
+.vc-time { text-align: right; flex: none; }
+.vc-time .countdown { font-size: 28px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.vc-time .small { margin-top: 2px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 12px 0 0; border: 0; border-top: 1px solid var(--line); }
+.meta > div, .meta > div + div { display: flex; align-items: baseline; gap: 6px; padding: 0; border: 0; min-width: 0; }
+.meta dt { margin: 0; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.meta dd { margin: 0; font-size: 14.5px; font-weight: 600; }
+.meta .ok { display: inline; margin-left: 4px; font-size: 13px; }
+.vc-actions { display: flex; justify-content: flex-end; }
+.vc-actions .btn { min-width: 140px; }
+.vow-card details.more { border-top: 1px solid var(--line); margin-top: 0; padding-top: 2px; }
+.vow-card details.more summary { font-size: 14px; color: var(--muted); }
+.menu-label { margin: 0; padding: 10px 14px 4px; font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); background: var(--soft); border-top: 1px solid var(--line); }
+.menu-label:first-child { border-top: 0; }
+.menu-label + .menu-item { border-top: 0; }
+/* owed */
+.owed { border: 1px solid var(--line); border-left: 4px solid var(--seal); background: var(--card); }
+.owed h2 { font-size: 20px; }
+.owed-amt { color: var(--seal); }
+/* record */
+.record { display: grid; gap: 8px; }
+.record .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: none; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; padding: 0; }
+.record .stat { padding: 10px 6px 10px 0; border: 0; background: none; }
+.record .stat + .stat { padding-left: 10px; border-left: 1px solid var(--line); }
+.record .stat b { font-size: 20px; }
+.record .stat span { display: block; font-size: 12.5px; line-height: 1.3; letter-spacing: 0; text-transform: none; color: var(--muted); }
+/* new vow steps */
+.step-label { display: inline-flex; align-items: center; gap: 8px; }
+.step-n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 700; flex: none; }
+.opts-label { display: inline-flex; align-items: center; gap: 8px; }
+.opts-label .step-n { letter-spacing: 0; }
+/* settings explainer */
+details.more-info { border-top: 1px solid var(--line); padding-top: 4px; }
+details.more-info > summary { font-size: 14.5px; font-weight: 600; padding: 8px 0; }
+details.more-info p { margin: 0; font-size: 15px; }
+details.more-info p + p { margin-top: 10px; }
+/* r1 polish */
+label.field > span.step-label { display: flex; align-items: center; gap: 10px; }
+.opts-label { gap: 10px; }
+html:has(dialog[open]) { overflow: hidden; }
+@media (max-width: 639px) {
+  .record .stats { grid-template-columns: 1fr 1fr; }
+  .record .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .record .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 639px) {
+  .vc-actions .btn { width: 100%; }
+  .vc-time .countdown { font-size: 24px; }
+  .home-hero .new-vow { padding: 8px 12px; min-height: 40px; }
+}
+@media (min-width: 1024px) {
+  .side .record .stats { grid-template-columns: 1fr 1fr; }
+  .side .record .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .side .record .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* ---- v8 round 3: one focus on Home ---- */
+.owed-note { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+.owed-note .eyebrow { margin: 0; }
+.owed-note .owed-amt { color: var(--seal); font-variant-numeric: tabular-nums; }
+.owed-note .list { margin: 0; }
+.owed-note .list li { align-items: center; gap: 12px; padding: 8px 0; }
+.owed-note .list li + li { border-top: 1px solid var(--line); }
+.owed-note .owed-why { margin: 0; }
+.hero-sub .owed-link { color: var(--seal); font-weight: 600; text-decoration: none; }
+.hero-sub .owed-link:hover { text-decoration: underline; }
+.vow-card.lead .eyebrow { font-size: 12.5px; }
+@media (max-width: 1023px) {
+  .home-layout > .main { order: -1; }
+}
 </style>
 </head>
 <body>
@@ -1067,16 +1153,16 @@ function owedBanner() {
     return "";
   }
   const total = unpaid.reduce((a, d) => a + d.amount, 0);
-  return `<section class="card owed stack" aria-labelledby="owed-h">
-    <h2 id="owed-h">You owe ${money(total)}</h2>
-    <p class="small muted">A broken vow is only real if you pay. Send the money yourself, then log the receipt.</p>
+  return `<section class="owed-note" id="owed" aria-labelledby="owed-h">
+    <h2 class="eyebrow" id="owed-h">You owe <span class="owed-amt">${money(total)}</span></h2>
     <ul class="list">${unpaid.map((d) => `<li>
       <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}" · ${fmtWhen(d.at)}${d.askedAt ? ` · asked ${esc(debtWitness(d).who)} to confirm` : ""}</span></div>
       <button class="btn" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
+    <p class="small muted owed-why">Pay the cause yourself, then log the receipt.</p>
   </section>`;
 }
 
-function vowCard(v) {
+function vowCard(v, lead = false) {
   const o = openOcc(v);
   const t = now();
   const pending = (v.pending || []).map((p) => {
@@ -1089,28 +1175,33 @@ function vowCard(v) {
       <button class="btn ghost" data-undo="${v.id}:${p.id}">Cancel change</button></div>`;
   }).join("");
   const notOpen = o && o.opens > t;
-  return `<article class="card vow-card stack" data-vow="${v.id}">
-    <div>
-      <h3 class="title">${esc(v.title)}</h3>
-      <div class="muted small">${esc(scheduleText(v))}</div>
+  const witnessInfo = !v.witness ? `<span class="muted">None</span>`
+    : v.witnessPub ? `${esc(v.witness)} <span class="ok">Accepted</span>`
+    : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}">Waiting for ${esc(v.witness)}</button>`
+    : `<button class="pill warn" data-act="witness" data-id="${v.id}">Send invite to ${esc(v.witness)}</button>`;
+  return `<article class="card vow-card${lead ? " lead" : ""}" data-vow="${v.id}">
+    ${lead ? `<p class="eyebrow">Next up</p>` : ""}
+    <div class="vc-head">
+      <div class="vc-title">
+        <h3 class="title">${esc(v.title)}</h3>
+        <div class="muted small">${esc(scheduleText(v))}</div>
+      </div>
+      ${o ? `<div class="vc-time">
+        <div class="countdown ${o.due - t < 3 * HOUR ? "soon" : ""}" data-left="${notOpen ? o.opens : o.due}">${fmtLeft((notOpen ? o.opens : o.due) - t)}</div>
+        <div class="small muted">${notOpen ? "until it opens" : "left"}</div>
+      </div>` : ""}
     </div>
     <dl class="meta">
       <div><dt>Stake</dt><dd><b class="stake-amt">${money(v.stake)}</b> to ${esc(v.to)}${v.escalate ? ` <span class="muted">(x1.5 on miss)</span>` : ""}</dd></div>
       <div><dt>Proof</dt><dd>${proofLabel[v.proof]}${v.proof === "timer" ? `, ${v.timerMin} min` : ""}</dd></div>
-      <div><dt>Witness</dt><dd>${!v.witness ? `<span class="muted">None</span>`
-        : v.witnessPub ? `${esc(v.witness)} <span class="ok">Accepted</span>`
-        : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}">Waiting for ${esc(v.witness)}</button>`
-        : `<button class="pill warn" data-act="witness" data-id="${v.id}">Send invite to ${esc(v.witness)}</button>`}</dd></div>
+      <div><dt>Witness</dt><dd>${witnessInfo}</dd></div>
     </dl>
     ${v.plan ? `<p class="small" style="margin:0"><b>Plan:</b> ${esc(v.plan)}</p>` : ""}
     ${vowTrail(v)}
-    ${o ? `<div class="row">
-      <div><div class="small muted">${notOpen ? "Check-in opens in" : "Time left"}</div>
-        <div class="countdown ${o.due - t < 3 * HOUR ? "soon" : ""}" data-left="${notOpen ? o.opens : o.due}">${fmtLeft((notOpen ? o.opens : o.due) - t)}</div></div>
-      <span class="spacer"></span>
+    ${o ? `<div class="vc-actions">
       ${o.claim
         ? `<span class="pill warn">Waiting for ${esc(v.witness)} to confirm</span>`
-        : `<button class="btn primary" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>`}
+        : `<button class="btn ${lead ? "primary" : "secondary"} vc-check" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>`}
     </div>` : ""}
     ${pending}
     ${v.bailoutAsked && !v.bailoutSignedAt && !(v.pending || []).some((p) => p.type === "delete")
@@ -1118,10 +1209,12 @@ function vowCard(v) {
     ${freeEdit(v) ? `<p class="small muted row" style="margin:0"><span>Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>.</span> <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
     <details class="more"><summary>More options</summary>
       <div class="menu" role="group" aria-label="Vow options">
+        <p class="menu-label">Change the vow</p>
         <button class="menu-item" data-act="raise" data-id="${v.id}">Raise stake</button>
         <button class="menu-item" data-act="lower" data-id="${v.id}">Lower stake</button>
         ${v.kind === "once" ? `<button class="menu-item" data-act="push" data-id="${v.id}">Push deadline</button>` : ""}
         <button class="menu-item" data-act="pass" data-id="${v.id}">Use a life-happens pass <span class="menu-note">1 per 30 days</span></button>
+        <p class="menu-label">Share</p>
         <button class="menu-item" data-act="witness" data-id="${v.id}">Send to witness</button>
         <button class="menu-item" data-act="ics" data-id="${v.id}">Add to calendar</button>
         <button class="menu-item danger" data-act="delete" data-id="${v.id}">Delete vow</button>
@@ -1160,19 +1253,27 @@ function viewHome() {
       <p class="small muted">Free. No account. Everything stays on this device.</p>
     </section>`;
   }
-  return `<div class="hero row"><h1>Your vows</h1><span class="spacer"></span><a class="btn primary" href="#new">New vow</a></div>
-    <div class="layout">
+  const byDue = active.slice().sort((a, b) => ((openOcc(a) || {}).due || Infinity) - ((openOcc(b) || {}).due || Infinity));
+  const nextOcc = byDue.length ? openOcc(byDue[0]) : null;
+  const owedTotal = S.debts.filter((d) => !d.paidAt).reduce((a, d) => a + d.amount, 0);
+  return `<div class="hero row home-hero"><div><h1>Your vows</h1>
+      <p class="hero-sub">${active.length} active${nextOcc ? ` · next deadline in <b data-left="${nextOcc.due}">${fmtLeft(nextOcc.due - now())}</b>` : ""}${owedTotal ? ` · <a class="owed-link" href="#owed">${money(owedTotal)} owed</a>` : ""}</p></div>
+    <span class="spacer"></span><a class="btn secondary new-vow" href="#new"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New vow</a></div>
+    <div class="layout home-layout">
     <aside class="side stack">
       ${owedBanner()}
-      <section class="stats" aria-label="Your record">
-        <div class="stat"><b>${st.kept}</b><span>kept</span></div>
-        <div class="stat"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>kept rate</span></div>
-        <div class="stat"><b>${st.streak}</b><span>streak (best ${st.best})</span></div>
-        <div class="stat"><b>${money(st.saved)}</b><span>stakes kept safe</span></div>
+      <section class="record" aria-labelledby="record-h">
+        <h2 class="eyebrow" id="record-h">Your record</h2>
+        <div class="stats">
+          <div class="stat"><b>${st.kept}</b><span>Kept</span></div>
+          <div class="stat"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>Kept rate</span></div>
+          <div class="stat"><b>${st.streak}</b><span>Streak, best ${st.best}</span></div>
+          <div class="stat"><b>${money(st.saved)}</b><span>Kept safe</span></div>
+        </div>
       </section>
     </aside>
     <div class="main stack">
-      ${active.length ? active.map(vowCard).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
+      ${active.length ? byDue.map((v, n) => vowCard(v, n === 0)).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
       ${witnessSection()}
     </div>
     </div>`;
@@ -1198,14 +1299,14 @@ function viewNew() {
   return `<div class="hero"><h1>Make a vow</h1><p class="muted">About 30 seconds. The defaults are fine.</p></div>
   <div class="layout">
   <form id="newf" class="card stack main" novalidate>
-    <label class="field"><span>I will…</span>
+    <label class="field"><span class="step-label"><span class="step-n">1</span>I will…</span>
       <input type="text" id="f-title" maxlength="80" placeholder="go to the gym for 45 minutes" required autocomplete="off"></label>
     <div class="chips ideas" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
-    <label class="field"><span>Witness</span>
+    <label class="field"><span class="step-label"><span class="step-n">2</span>Witness</span>
       <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required aria-describedby="f-witness-hint">
       <span class="hint" id="f-witness-hint">They accept on their phone. Only they can confirm your proof.</span></label>
 
-    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label">Deadline, stake and proof</span><span id="opts-sum">Tonight · $10 to a charity · Photo proof</span></span><span class="opts-edit">Change</span></summary>
+    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Deadline, stake and proof</span><span id="opts-sum">Tonight · $10 to a charity · Photo proof</span></span><span class="opts-edit">Change</span></summary>
     <div class="stack" style="margin-top:8px">
     <fieldset><legend class="legend">How often</legend>
       <div class="chips">
@@ -1328,11 +1429,14 @@ function viewHistory() {
   <div class="layout">
   <aside class="side stack">
     ${heatmap()}
-    <section class="stats" aria-label="Totals">
-      <div class="stat"><b>${st.kept}</b><span>kept</span></div>
-      <div class="stat"><b>${st.broken}</b><span>broken</span></div>
-      <div class="stat"><b>${money(st.paid)}</b><span>paid to causes</span></div>
-      <div class="stat"><b>${money(st.owed)}</b><span>still owed</span></div>
+    <section class="record" aria-labelledby="totals-h">
+      <h2 class="eyebrow" id="totals-h">Totals</h2>
+      <div class="stats">
+        <div class="stat"><b>${st.kept}</b><span>Kept</span></div>
+        <div class="stat"><b>${st.broken}</b><span>Broken</span></div>
+        <div class="stat"><b>${money(st.paid)}</b><span>Paid to causes</span></div>
+        <div class="stat"><b>${money(st.owed)}</b><span>Still owed</span></div>
+      </div>
     </section>
   </aside>
   <div class="main stack">
@@ -1385,10 +1489,12 @@ function viewSettings() {
     <section class="card stack about">
       <h2>How Vow works</h2>
       <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
+      <details class="more-info"><summary>Money, witnesses and privacy</summary>
       <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
       <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are only claims: a check-in counts when your witness signs it. Before they accept, proof is on your honor.</p>
       <p><b>Debts need proof.</b> A debt only clears with a receipt image or your witness's signed confirmation, and photo check-ins must be taken live with the camera, not picked from the gallery.</p>
-    <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
+      <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
+      </details>
       <p class="small muted">Vow is free and has no subscription. It runs offline once loaded.</p>
     </section>
   </aside>
@@ -1928,6 +2034,8 @@ function checkIn(v) {
       const snap = $("#psnap", d);
       const retake = $("#pretake", d);
       const prev = $("#pprev", d);
+      const submit = $("#ok", d);
+      submit.disabled = true;
       dlg.addEventListener("close", () => stopCamera(stream), { once: true });
       startCamera(video).then((s) => {
         stream = s;
@@ -1946,6 +2054,7 @@ function checkIn(v) {
         video.hidden = true;
         snap.hidden = true;
         retake.hidden = false;
+        submit.disabled = false;
       });
       retake.addEventListener("click", () => {
         data = null;
@@ -1953,6 +2062,7 @@ function checkIn(v) {
         video.hidden = false;
         snap.hidden = false;
         retake.hidden = true;
+        submit.disabled = true;
       });
       $("#pf", d).addEventListener("submit", (e) => {
         e.preventDefault();

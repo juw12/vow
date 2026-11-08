@@ -88,3 +88,19 @@ Banned words: supercharge, seamless, unlock, next-level, effortless, magic, revo
 - **Check-in (photo)**: 4:3 camera frame with a "Camera preview" placeholder, full-width Take photo.
 - Tried and not kept (council ties): 40 px owed amount, quiet record band, inline meta, grouped menu,
   secondary Check in when the deadline is far. See `hone/refine_log.md`.
+
+## v8 additions (one focus on Home, 2026-11-08)
+- **Home order**: a "Next up" lead card (soonest deadline, primary Check in, seal-tinted border); other vows
+  use a secondary outlined Check in. Vows are sorted by deadline. Below 1024 px the vow list comes first.
+- **Hero line**: "2 active · next deadline in 9h 03m · $10 owed" - the debt is named once, up top, as a link.
+- **Debt notice** (`.owed-note`): a slim card with an eyebrow "You owe $10", one row per debt, I paid, and one
+  short line of help. No headline competing with the vow card.
+- **Record band** (`.record`): ruled 4-up stats (2 x 2 on phone and in the side column), sentence-case
+  labels; History "Totals" uses the same component.
+- **New vow**: numbered steps 1 I will, 2 Witness, 3 Deadline, stake and proof.
+- **More options**: grouped with small headers ("Change the vow", "Share"); Delete stays apart at the bottom.
+- **Settings**: the explainer keeps its first paragraph; money, witnesses and privacy fold into a disclosure.
+- **Photo check-in**: Submit proof is disabled until a photo is taken.
+- Secondary button style (`.btn.secondary`): card background, ink text, 1 px ink-tinted border.
+- Tried and not kept (council): side-column calendar on desktop Home, quieter owed label + I paid on its own
+  row, ink-only money amounts with a countdown lockup. See `hone/refine_log.md`.
