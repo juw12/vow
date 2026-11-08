@@ -104,3 +104,20 @@ Banned words: supercharge, seamless, unlock, next-level, effortless, magic, revo
 - Secondary button style (`.btn.secondary`): card background, ink text, 1 px ink-tinted border.
 - Tried and not kept (council): side-column calendar on desktop Home, quieter owed label + I paid on its own
   row, ink-only money amounts with a countdown lockup. See `hone/refine_log.md`.
+
+## v9 (hone run 3, round 3): one control language, calmer Home
+
+Council-judged against rubric ui-v1: 7.95 vs the v8-based r1 at 6.65 in the same session; swapped pairwise 2-0-1.
+
+- Vow card footer: "More options" and "Check in" share one row on tablet and desktop; the menu opens full width below.
+- Countdown carries its label above the number ("Time left" / "Opens in") instead of a loose "left" underneath.
+- Home gains a "Recently settled" panel (last three outcomes, link to History) so the main column ends with real content.
+- "Your record" is a card that matches "You owe"; eyebrow labels always use the sans face.
+- Owed rows: title line, then the date on its own line, then "asked X to confirm".
+- One button language: secondary-style border on every outline button, borderless ghost buttons,
+  disabled buttons as quiet outlines (no faded red), radius 10 for buttons, chips and inputs.
+- Every disclosure uses the same chevron (the Settings explainer included); no browser triangle.
+- Phone: idea chips wrap on compact rows; no-camera check-in shows a clear notice.
+
+Tried and rejected this run (kept in hone/refine_log.md): ink-coloured selected chips and outline destructive
+confirms (r4, lost 1-0-2), borderless secondary Home sections (r5, +0.27 and 0-0-3 ties).

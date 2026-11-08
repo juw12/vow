@@ -415,6 +415,122 @@ html:has(dialog[open]) { overflow: hidden; }
 @media (max-width: 1023px) {
   .home-layout > .main { order: -1; }
 }
+/* ---- v9 (hone run 3): desktop composition ---- */
+.nw { white-space: nowrap; }
+.danger-zone h2 { color: var(--ink); }
+/* new vow: live preview */
+.preview { display: grid; gap: 12px; padding: 20px; border-color: color-mix(in srgb, var(--ink) 14%, var(--line)); }
+.pv-title { margin: 0; font: 600 21px/1.3 var(--serif); overflow-wrap: anywhere; }
+.pv-blank { color: var(--muted); font-weight: 400; }
+.pv-terms { display: grid; margin: 0; border-top: 1px solid var(--line); }
+.pv-terms > div { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.pv-terms dt { margin: 0; font-size: 13.5px; color: var(--muted); }
+.pv-terms dd { margin: 0; font-size: 14.5px; font-weight: 600; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.note-card { padding: 4px 4px 0; }
+.note-card .steps { margin: 0; }
+/* history: totals band */
+.totals-band { margin-bottom: 20px; }
+.totals-band .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.totals-band .stat b { font-size: 24px; font-variant-numeric: tabular-nums; }
+.totals-band .stat.owes b { color: var(--seal); }
+/* settings: label-column rows */
+.settings { display: grid; gap: 0; }
+.set-row { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--line); }
+.set-row:first-child { border-top: 0; padding-top: 4px; }
+.set-head h2 { margin: 0 0 4px; }
+.set-head p { margin: 0; max-width: 34ch; }
+@media (max-width: 639px) {
+  .totals-band .stats { grid-template-columns: 1fr 1fr; }
+  .totals-band .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .totals-band .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .set-row { padding: 16px 0; }
+}
+@media (min-width: 1024px) {
+  main.wrap:has(> .settings) { max-width: 1080px; }
+  .set-row { grid-template-columns: 300px minmax(0, 1fr); gap: 40px; padding: 28px 0; }
+  .set-row:first-child { padding-top: 8px; }
+  .set-row .card .field input { max-width: 440px; }
+  .totals-band { margin-bottom: 24px; }
+  .totals-band .stat b { font-size: 28px; }
+  .history-layout > .side .card { margin: 0; }
+}
+
+/* ---- v9 round 2: one control language ---- */
+.eyebrow { font-family: var(--sans); }
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+/* buttons */
+.btn { border-color: color-mix(in srgb, var(--ink) 22%, var(--line)); color: var(--ink); }
+.btn:hover { border-color: var(--ink); }
+.btn.primary, .btn.primary:hover { border-color: var(--seal); color: var(--seal-ink); }
+.btn.primary:hover { background: color-mix(in srgb, var(--seal) 88%, var(--ink)); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--ink); }
+.btn.ghost:hover { background: var(--soft); border-color: transparent; }
+.btn.danger { color: var(--seal); border-color: color-mix(in srgb, var(--seal) 45%, var(--line)); }
+.btn.danger:hover { border-color: var(--seal); }
+.btn[disabled], .btn.primary[disabled] {
+  opacity: 1; background: var(--soft); border-color: var(--line); color: var(--muted); transform: none;
+}
+.chips label, .chips button { border-radius: 10px; }
+input[type=text], input[type=number], input[type=datetime-local], input[type=time], input[type=date], input[type=email], textarea, select { border-radius: 10px; }
+/* vow card footer: actions and options share a row */
+.vow-card details.more { border-top: 0; padding-top: 0; }
+.vow-card details.more summary { width: auto; }
+.vc-foot { display: grid; gap: 4px; margin-top: 2px; }
+.vc-foot > details.more { border-top: 1px solid var(--line); }
+.vc-foot > .vc-actions:empty { display: none; }
+@media (min-width: 640px) {
+  .vc-foot { grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0 16px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .vc-foot > details.more { grid-column: 1 / -1; grid-row: 1; border-top: 0; }
+  .vc-foot > .vc-actions { grid-column: 2; grid-row: 1; position: relative; z-index: 1; align-self: start; }
+  .vc-foot > details.more[open] .menu { margin-top: 10px; }
+}
+/* record and owed: matching side cards */
+.record, .owed-note { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+.record { gap: 10px; }
+.record .stats { border-bottom: 0; }
+.totals-band .stats { border-top: 0; }
+.totals-band .stat { padding-top: 4px; }
+.record .stat { padding-bottom: 2px; }
+.owed-note .list li .small { line-height: 1.45; }
+/* settings explainer gets the same chevron as other disclosures */
+details.more-info > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; min-height: 44px; }
+details.more-info > summary::after {
+  content: ""; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: translateY(-2px) rotate(45deg); transition: transform .15s ease; flex: none; margin-right: 4px;
+}
+details.more-info[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { details.more-info > summary::after { transition: none; } }
+/* settings cards: no stray top margin */
+.card > :first-child, .set-row .card > p:first-child { margin-top: 0; }
+.card > :last-child { margin-bottom: 0; }
+
+/* ---- v9 round 3: countdown label, recent panel, quiet disabled states ---- */
+.vc-time-label { font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.recent { padding: 16px 18px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+.recent-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.recent-link { font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.recent-link:hover { text-decoration: underline; }
+.recent-list { list-style: none; margin: 0; padding: 0; }
+.recent-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 16px; padding: 10px 0; border-top: 1px solid var(--line); }
+.recent-list li:first-child { border-top: 0; }
+.recent-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-list .pill { justify-self: end; font-size: 12.5px; padding: 1px 8px; }
+@media (max-width: 639px) {
+  .recent-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .recent-when { grid-column: 1; grid-row: 2; }
+  .recent-list .pill { grid-column: 2; grid-row: 1 / span 2; }
+  .chips.ideas { gap: 6px; }
+  .chips.ideas button { font-size: 13.5px; padding: 6px 10px; }
+}
+.btn[disabled], .btn.primary[disabled] {
+  background: transparent; border-color: var(--line); color: var(--muted); opacity: 1;
+}
+.cam.off::before { content: "Camera unavailable"; }
+.hint.notice {
+  margin: 0; padding: 10px 12px; border-left: 3px solid var(--warn); border-radius: 8px;
+  background: var(--soft); color: var(--ink);
+}
 </style>
 </head>
 <body>
@@ -1156,7 +1272,7 @@ function owedBanner() {
   return `<section class="owed-note" id="owed" aria-labelledby="owed-h">
     <h2 class="eyebrow" id="owed-h">You owe <span class="owed-amt">${money(total)}</span></h2>
     <ul class="list">${unpaid.map((d) => `<li>
-      <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}" · ${fmtWhen(d.at)}${d.askedAt ? ` · asked ${esc(debtWitness(d).who)} to confirm` : ""}</span></div>
+      <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}"<br><span class="nw">${fmtWhen(d.at)}</span>${d.askedAt ? ` <span class="nw">· asked ${esc(debtWitness(d).who)} to confirm</span>` : ""}</span></div>
       <button class="btn" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
     <p class="small muted owed-why">Pay the cause yourself, then log the receipt.</p>
   </section>`;
@@ -1187,8 +1303,8 @@ function vowCard(v, lead = false) {
         <div class="muted small">${esc(scheduleText(v))}</div>
       </div>
       ${o ? `<div class="vc-time">
+        <div class="vc-time-label">${notOpen ? "Opens in" : "Time left"}</div>
         <div class="countdown ${o.due - t < 3 * HOUR ? "soon" : ""}" data-left="${notOpen ? o.opens : o.due}">${fmtLeft((notOpen ? o.opens : o.due) - t)}</div>
-        <div class="small muted">${notOpen ? "until it opens" : "left"}</div>
       </div>` : ""}
     </div>
     <dl class="meta">
@@ -1198,15 +1314,16 @@ function vowCard(v, lead = false) {
     </dl>
     ${v.plan ? `<p class="small" style="margin:0"><b>Plan:</b> ${esc(v.plan)}</p>` : ""}
     ${vowTrail(v)}
+    ${pending}
+    ${v.bailoutAsked && !v.bailoutSignedAt && !(v.pending || []).some((p) => p.type === "delete")
+      ? `<div class="pending row"><span>Walk-away: waiting for ${esc(v.witness)} to sign off</span><span class="spacer"></span><button class="btn ghost" data-wa-resend="${v.id}">Resend</button><button class="btn ghost" data-wa-cancel="${v.id}">Cancel</button></div>` : ""}
+    ${freeEdit(v) ? `<p class="small muted row" style="margin:0"><span>Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>.</span> <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
+    <div class="vc-foot">
     ${o ? `<div class="vc-actions">
       ${o.claim
         ? `<span class="pill warn">Waiting for ${esc(v.witness)} to confirm</span>`
         : `<button class="btn ${lead ? "primary" : "secondary"} vc-check" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>`}
     </div>` : ""}
-    ${pending}
-    ${v.bailoutAsked && !v.bailoutSignedAt && !(v.pending || []).some((p) => p.type === "delete")
-      ? `<div class="pending row"><span>Walk-away: waiting for ${esc(v.witness)} to sign off</span><span class="spacer"></span><button class="btn ghost" data-wa-resend="${v.id}">Resend</button><button class="btn ghost" data-wa-cancel="${v.id}">Cancel</button></div>` : ""}
-    ${freeEdit(v) ? `<p class="small muted row" style="margin:0"><span>Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>.</span> <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
     <details class="more"><summary>More options</summary>
       <div class="menu" role="group" aria-label="Vow options">
         <p class="menu-label">Change the vow</p>
@@ -1220,6 +1337,7 @@ function vowCard(v, lead = false) {
         <button class="menu-item danger" data-act="delete" data-id="${v.id}">Delete vow</button>
       </div>
     </details>
+    </div>
   </article>`;
 }
 
@@ -1275,8 +1393,26 @@ function viewHome() {
     <div class="main stack">
       ${active.length ? byDue.map((v, n) => vowCard(v, n === 0)).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
       ${witnessSection()}
+      ${recentCard()}
     </div>
     </div>`;
+}
+
+function recentCard() {
+  const label = { kept: "Kept", broken: "Broken", excused: "Excused", cancelled: "Cancelled" };
+  const items = S.vows.flatMap((v) => v.occ.filter((o) => o.status !== "open").map((o) => ({ v, o })))
+    .sort((a, b) => (b.o.resolvedAt || b.o.due) - (a.o.resolvedAt || a.o.due))
+    .slice(0, 3);
+  if (!items.length) {
+    return "";
+  }
+  return `<section class="recent" aria-labelledby="recent-h">
+    <div class="recent-head"><h2 class="eyebrow" id="recent-h">Recently settled</h2><a class="recent-link" href="#history">See history</a></div>
+    <ul class="recent-list">${items.map(({ v, o }) => `<li>
+      <span class="recent-title">${esc(v.title)}</span>
+      <span class="recent-when small muted">${fmtWhen(o.resolvedAt || o.due)}</span>
+      <span class="pill ${o.status}">${label[o.status]}</span></li>`).join("")}</ul>
+  </section>`;
 }
 
 function viewNew() {
@@ -1375,8 +1511,19 @@ function viewNew() {
     <button class="btn primary block" id="seal-btn">Seal my vow</button>
   </form>
   <aside class="side stack">
-    <section class="card stack note-card">
-      <h2>What happens next</h2>
+    <section class="card preview" aria-labelledby="pv-h" aria-live="polite">
+      <p class="eyebrow" id="pv-h">Your vow</p>
+      <p class="pv-title" id="pv-title">I will <span class="pv-blank">…</span></p>
+      <dl class="pv-terms">
+        <div><dt>Deadline</dt><dd id="pv-when">Tonight</dd></div>
+        <div><dt>Stake</dt><dd id="pv-stake">$10</dd></div>
+        <div><dt>If missed, pay</dt><dd id="pv-to">a charity</dd></div>
+        <div><dt>Proof</dt><dd id="pv-proof">Photo</dd></div>
+        <div><dt>Witness</dt><dd id="pv-witness"><span class="pv-blank">Not named yet</span></dd></div>
+      </dl>
+    </section>
+    <section class="stack note-card">
+      <h2 class="eyebrow">What happens next</h2>
       <ol class="steps">
         <li><b>Your witness accepts.</b> They get a link and confirm on their phone.</li>
         <li><b>Show proof before the deadline.</b> Nothing else happens. The stake stays yours.</li>
@@ -1426,18 +1573,18 @@ function viewHistory() {
     ? `Nothing settled in ${monthName} yet. Your first kept vow starts the story.`
     : `In ${monthName} you kept ${m.kept} ${m.kept === 1 ? "promise" : "promises"}${m.broken ? ` and broke ${m.broken}` : ""}${m.excused ? ` (${m.excused} excused)` : ""}. Best streak so far: ${st.best}.`;
   return `<div class="hero"><h1>History</h1><p class="story">${story}</p></div>
-  <div class="layout">
+  <section class="record totals-band" aria-labelledby="totals-h">
+    <h2 class="sr" id="totals-h">Totals</h2>
+    <div class="stats">
+      <div class="stat"><b>${st.kept}</b><span>Kept</span></div>
+      <div class="stat"><b>${st.broken}</b><span>Broken</span></div>
+      <div class="stat"><b>${money(st.paid)}</b><span>Paid to causes</span></div>
+      <div class="stat${st.owed ? " owes" : ""}"><b>${money(st.owed)}</b><span>Still owed</span></div>
+    </div>
+  </section>
+  <div class="layout history-layout">
   <aside class="side stack">
     ${heatmap()}
-    <section class="record" aria-labelledby="totals-h">
-      <h2 class="eyebrow" id="totals-h">Totals</h2>
-      <div class="stats">
-        <div class="stat"><b>${st.kept}</b><span>Kept</span></div>
-        <div class="stat"><b>${st.broken}</b><span>Broken</span></div>
-        <div class="stat"><b>${money(st.paid)}</b><span>Paid to causes</span></div>
-        <div class="stat"><b>${money(st.owed)}</b><span>Still owed</span></div>
-      </div>
-    </section>
   </aside>
   <div class="main stack">
     <section class="card stack"><h2>Check-ins</h2>
@@ -1457,47 +1604,50 @@ function viewHistory() {
 
 function viewSettings() {
   const s = S.settings;
-  return `<div class="hero"><h1>Settings</h1></div>
-  <div class="layout">
-  <div class="main stack">
-    <section class="card stack">
-      <h2>Preferences</h2>
-      <label class="field"><span>Your name <span class="muted small">(shown to your witness)</span></span>
-        <input type="text" id="s-name" value="${esc(s.name)}" maxlength="40"></label>
-      <label class="field"><span>Currency symbol</span>
-        <input type="text" id="s-cur" value="${esc(s.currency)}" maxlength="4"></label>
-      <fieldset><legend class="legend">Theme</legend><div class="chips">
-        ${["auto", "light", "dark"].map((x) => `<label><input type="radio" name="theme" value="${x}" ${s.theme === x ? "checked" : ""}><span>${x[0].toUpperCase() + x.slice(1)}</span></label>`).join("")}
-      </div></fieldset>
-    </section>
-    <section class="card stack">
-      <h2>Backup</h2>
-      <p class="small muted">Everything lives on this device only. Export a backup now and then.</p>
-      <div class="row">
-        <button class="btn" id="export">Export backup</button>
-        <label class="btn" for="import-file">Import backup</label>
-        <input type="file" id="import-file" accept="application/json,.json" class="sr">
+  return `<div class="hero"><h1>Settings</h1><p class="muted">Stored on this device only. No account.</p></div>
+  <div class="settings">
+    <section class="set-row" aria-labelledby="set-pref">
+      <div class="set-head"><h2 id="set-pref">Preferences</h2><p class="small muted">How you appear to your witness and how money is shown.</p></div>
+      <div class="card stack">
+        <label class="field"><span>Your name <span class="muted small">(shown to your witness)</span></span>
+          <input type="text" id="s-name" value="${esc(s.name)}" maxlength="40"></label>
+        <label class="field"><span>Currency symbol</span>
+          <input type="text" id="s-cur" value="${esc(s.currency)}" maxlength="4"></label>
+        <fieldset><legend class="legend">Theme</legend><div class="chips">
+          ${["auto", "light", "dark"].map((x) => `<label><input type="radio" name="theme" value="${x}" ${s.theme === x ? "checked" : ""}><span>${x[0].toUpperCase() + x.slice(1)}</span></label>`).join("")}
+        </div></fieldset>
       </div>
     </section>
-    <section class="card stack danger-zone">
-      <h2>Erase data</h2>
-      <p class="small muted">Deletes every vow, debt and witness key on this device. This can't be undone.</p>
-      <div class="row"><button class="btn danger" id="erase">Erase everything</button></div>
+    <section class="set-row" aria-labelledby="set-backup">
+      <div class="set-head"><h2 id="set-backup">Backup</h2><p class="small muted">Everything lives on this device only. Export a backup now and then.</p></div>
+      <div class="card stack">
+        <p class="small muted">The file includes your vows, debts, proof notes and witness keys.</p>
+        <div class="row">
+          <button class="btn" id="export">Export backup</button>
+          <label class="btn" for="import-file">Import backup</label>
+          <input type="file" id="import-file" accept="application/json,.json" class="sr">
+        </div>
+      </div>
     </section>
-  </div>
-  <aside class="side stack">
-    <section class="card stack about">
-      <h2>How Vow works</h2>
-      <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
-      <details class="more-info"><summary>Money, witnesses and privacy</summary>
-      <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
-      <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are only claims: a check-in counts when your witness signs it. Before they accept, proof is on your honor.</p>
-      <p><b>Debts need proof.</b> A debt only clears with a receipt image or your witness's signed confirmation, and photo check-ins must be taken live with the camera, not picked from the gallery.</p>
-      <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
-      </details>
-      <p class="small muted">Vow is free and has no subscription. It runs offline once loaded.</p>
+    <section class="set-row" aria-labelledby="set-how">
+      <div class="set-head"><h2 id="set-how">How Vow works</h2><p class="small muted">Free, no subscription. Runs offline once loaded.</p></div>
+      <div class="card stack about">
+        <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
+        <details class="more-info"><summary>Money, witnesses and privacy</summary>
+        <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
+        <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are only claims: a check-in counts when your witness signs it. Before they accept, proof is on your honor.</p>
+        <p><b>Debts need proof.</b> A debt only clears with a receipt image or your witness's signed confirmation, and photo check-ins must be taken live with the camera, not picked from the gallery.</p>
+        <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
+        </details>
+      </div>
     </section>
-  </aside>
+    <section class="set-row" aria-labelledby="set-erase">
+      <div class="set-head"><h2 id="set-erase">Erase data</h2><p class="small muted">Deletes every vow, debt and witness key on this device.</p></div>
+      <div class="card stack danger-zone">
+        <p class="small muted">This can't be undone. Export a backup first if you might want it back.</p>
+        <div class="row"><button class="btn danger" id="erase">Erase everything</button></div>
+      </div>
+    </section>
   </div>`;
 }
 
@@ -1815,6 +1965,15 @@ function wireNew() {
       : "repeats";
     const stakeText = f.stake.value === "custom" ? money(Number($("#f-stake").value) || 0) : money(Number(f.stake.value));
     $("#opts-sum").textContent = `${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"} · ${proofLabel[f.proof.value]} proof`;
+    const titleText = $("#f-title").value.trim();
+    const witnessText = $("#f-witness").value.trim();
+    const blank = (s) => `<span class="pv-blank">${s}</span>`;
+    $("#pv-title").innerHTML = `I will ${titleText ? esc(titleText) : blank("…")}`;
+    $("#pv-when").textContent = kind === "repeat" ? `Repeats, by ${$("#f-time").value}` : whenText;
+    $("#pv-stake").textContent = stakeText;
+    $("#pv-to").textContent = $("#f-to").value || "a charity";
+    $("#pv-proof").textContent = proofLabel[f.proof.value];
+    $("#pv-witness").innerHTML = witnessText ? esc(witnessText) : blank("Not named yet");
   };
   f.addEventListener("input", sync);
   f.addEventListener("change", (e) => {
@@ -1826,9 +1985,11 @@ function wireNew() {
   $$("[data-idea]", f).forEach((b) => b.addEventListener("click", () => {
     $("#f-title").value = b.dataset.idea;
     $("#f-title").focus();
+    sync();
   }));
   $$("[data-to]", f).forEach((b) => b.addEventListener("click", () => {
     $("#f-to").value = b.dataset.to;
+    sync();
   }));
   f.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -2042,6 +2203,8 @@ function checkIn(v) {
         snap.disabled = false;
       }).catch(() => {
         video.hidden = true;
+        video.closest(".cam").classList.add("off");
+        $("#pcam-hint", d).classList.add("notice");
         $("#pcam-hint", d).textContent = "Vow can't open a camera here. Allow camera access, or check in from your phone: photo proof only takes a live camera shot.";
       });
       snap.addEventListener("click", () => {
