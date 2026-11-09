@@ -540,6 +540,205 @@ details.more-info[open] > summary::after { transform: translateY(2px) rotate(-13
 
 /* v10: witness debts */
 .wdebt { border-top: 1px dashed var(--line); }
+
+/* ---- v11 (hone run 6): balance, one red, compact menus ---- */
+body { display: flex; flex-direction: column; }
+body > main { flex: 1 0 auto; width: 100%; box-sizing: border-box; }
+.site-foot { display: none; }
+@media (min-width: 1024px) {
+  .site-foot { display: block; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .site-foot .wrap { display: flex; align-items: center; gap: 0 22px; padding-top: 16px; padding-bottom: 20px; }
+  .site-foot span + span:not(.spacer)::before { content: ""; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: currentColor; margin: 0 22px 3px -12px; opacity: .6; }
+  .site-foot a { color: var(--ink); font-weight: 600; text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  main.wrap { padding-bottom: 48px; }
+  .vow-card.lead .vc-time .countdown { font-size: 36px; }
+}
+/* red is reserved for the next action */
+.meta .stake-amt { color: var(--ink); }
+.owed-note .owed-amt, .totals-band .stat.owes b { color: var(--ink); }
+.hero-sub .owed-link { color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--warn) 60%, transparent); text-underline-offset: 3px; }
+.owed-note { border-left: 3px solid var(--warn); }
+/* one footer layout on every size: options left, check-in right */
+.vc-foot { grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.vc-foot > details.more { grid-column: 1 / -1; grid-row: 1; border-top: 0; }
+.vc-foot > .vc-actions { grid-column: 2; grid-row: 1; position: relative; z-index: 1; align-self: start; }
+.vc-foot > details.more[open] .menu { margin-top: 10px; }
+.vc-actions .btn { width: auto; min-width: 132px; }
+/* options menu: two-column groups */
+.menu { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.menu-label { grid-column: 1 / -1; border-top: 0; padding: 8px 12px 4px; }
+.menu-item, .menu-item:first-child, .menu-label + .menu-item { border: 0; }
+.menu-item { min-height: 44px; padding: 9px 12px; font-size: 14.5px; justify-content: flex-start; }
+.menu-item.wide { grid-column: 1 / -1; justify-content: space-between; }
+.menu-item.danger { border-top: 0; margin-top: 6px; box-shadow: 0 -6px 0 var(--soft); }
+/* new vow: summary under its label, Change on the label row */
+details.opts > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; }
+details.opts > summary .opts-text { display: contents; }
+details.opts > summary .opts-label { grid-column: 1; grid-row: 1; }
+details.opts > summary .opts-edit { grid-column: 2; grid-row: 1; }
+details.opts > summary #opts-sum { grid-column: 1 / -1; grid-row: 2; padding-left: 32px; }
+@media (max-width: 639px) {
+  .chips.ideas { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -20px; padding-right: 20px; }
+  .chips.ideas::-webkit-scrollbar { display: none; }
+  .chips.ideas button { flex: none; }
+}
+/* check-in without a camera */
+.btn.solid { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.btn.solid:hover { background: color-mix(in srgb, var(--ink) 85%, var(--bg)); }
+/* witness invite */
+.witness-job { display: grid; gap: 10px; margin-top: 20px; padding: 0 4px; }
+.witness-job .steps { font-size: 15px; }
+.witness-job p { margin: 0; }
+.payments .list li { align-items: flex-start; }
+/* settled list in the narrow side column: title over date, pill on the right */
+.side .recent-list li { grid-template-columns: minmax(0, 1fr) auto; }
+.side .recent-when { grid-column: 1; grid-row: 2; }
+.side .recent-list .pill { grid-column: 2; grid-row: 1 / span 2; }
+/* desktop new vow: every choice visible in a compact two-column grid */
+@media (min-width: 1024px) {
+  #opts > .stack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 28px; align-items: start; }
+  #opts > .stack > * { margin: 0; }
+  #opts > .stack > fieldset:first-child, #once-box, #repeat-box { grid-column: 1 / -1; }
+  #opts > .stack > .chips { grid-column: 2; align-self: start; margin-top: -6px; }
+  #opts > .stack > fieldset:has(input[name=stake]) { grid-row: span 2; }
+  #opts .chips[aria-label] button { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+  #opts .chips label, #opts .chips button { min-height: 38px; }
+  .hero { padding-top: 28px; padding-bottom: 14px; }
+}
+
+/* ---- v11 round 2: one column options, quiet ledger, crafted details ---- */
+/* idea chips wrap inside the card on phones */
+@media (max-width: 639px) {
+  .chips.ideas { flex-wrap: wrap; overflow: visible; margin-right: 0; padding-right: 0; }
+}
+/* options: one column of rows, note on the right */
+.menu { display: grid; grid-template-columns: 1fr; gap: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.menu-label { margin: 0; padding: 10px 14px 6px; background: var(--soft); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.menu-item, .menu-item:first-child, .menu-label + .menu-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 10px 14px; border: 0; border-top: 1px solid var(--line); font-size: 15px; font-weight: 500; text-align: left; transition: background .12s ease; }
+.menu-label + .menu-item { border-top: 0; }
+.menu-item .menu-note { flex: none; font-size: 13px; color: var(--muted); font-weight: 400; white-space: nowrap; }
+.menu-item:hover { background: color-mix(in srgb, var(--soft) 70%, var(--card)); }
+.menu-item.danger { margin: 0; box-shadow: none; border-top: 6px solid var(--soft); color: var(--seal); font-weight: 600; }
+.menu-item.danger .menu-note { color: var(--muted); }
+/* debt card: quiet */
+.owed-note { border-left: 1px solid var(--line); }
+.owed-note .owed-h { font-size: 17px; }
+.btn.quiet { background: transparent; border-color: transparent; color: var(--ink); font-weight: 600; padding: 8px 6px; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; text-decoration-thickness: 2px; }
+.btn.quiet:hover { text-decoration-color: var(--ink); background: transparent; }
+/* buttons: visible hover on every kind */
+.btn { transition: transform .08s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.btn:not(.primary):not(.quiet):not(.solid):hover { background: var(--soft); border-color: color-mix(in srgb, var(--ink) 18%, var(--line)); }
+.btn.primary:hover { background: color-mix(in srgb, var(--seal) 88%, #000); border-color: color-mix(in srgb, var(--seal) 88%, #000); }
+.btn.primary { box-shadow: 0 1px 0 color-mix(in srgb, var(--seal) 60%, #000); }
+/* calendar: fills its card, cells keep square */
+.heat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.heat-head h2 { margin: 0; }
+.heat-head p { margin: 0; }
+.heat { grid-template-rows: repeat(7, auto); grid-auto-columns: minmax(0, 1fr); gap: 4px; max-width: 420px; }
+.heat span { aspect-ratio: 1; border-radius: 4px; }
+.heat .today { outline: 2px solid var(--ink); outline-offset: 1px; }
+.heat-months { max-width: 420px; margin-bottom: -4px; }
+.legend-row { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--line); list-style: none; }
+.legend-row li { display: inline-flex; align-items: center; gap: 6px; }
+/* camera: framed placeholder with an icon */
+.cam { box-shadow: inset 0 0 0 1px var(--line); align-content: center; gap: 8px; }
+.cam::before { content: ""; width: 36px; height: 36px; background: var(--muted); opacity: .7; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E") center / contain no-repeat; }
+.cam::after { content: "Camera preview"; color: var(--muted); font-size: 13.5px; }
+.cam.off::before { opacity: .35; }
+/* settings: name and currency share a row on wide screens */
+.pref-grid { display: grid; gap: 14px; }
+@media (min-width: 640px) {
+  .pref-grid { grid-template-columns: minmax(0, 1fr) 120px; align-items: end; }
+  .pref-grid input { max-width: none; width: 100%; }
+}
+/* cards: a hairline of depth in light mode */
+:root:not([data-theme="dark"]) .card, :root:not([data-theme="dark"]) .vow-card { box-shadow: 0 1px 2px rgba(29, 26, 22, .04); }
+
+/* ---- v11 round 3: one dominant card, one quiet rail, a week view ---- */
+/* the rail: record and settled history in one panel */
+.rail { display: grid; gap: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); overflow: hidden; }
+.rail > .record, .rail > .recent { border: 0; border-radius: 0; background: transparent; }
+.rail > .recent { border-top: 1px solid var(--line); }
+.rail .record .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 0; }
+.rail .record .stat, .rail .record .stat:nth-child(3), .rail .record .stat:nth-child(n+3) { border-top: 0; padding: 4px 8px 2px; border-left: 1px solid var(--line); }
+.rail .record .stat:first-child { padding-left: 0; border-left: 0; }
+.rail .record .stat b { font-size: 19px; }
+.rail .record .stat span { font-size: 12px; }
+.side .rail .record .stats { grid-template-columns: 1fr 1fr; }
+.side .rail .record .stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+.side .rail .record .stat:nth-child(n+3) { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 6px; }
+@media (max-width: 1023px) {
+  .side .rail .record .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .side .rail .record .stat:nth-child(n+3) { border-top: 0; padding-top: 4px; margin-top: 0; }
+  .side .rail .record .stat:nth-child(3) { padding-left: 8px; border-left: 1px solid var(--line); }
+}
+/* one primary colour: the no-camera note button is a normal primary */
+#pnote-alt.primary { background: var(--seal); border-color: var(--seal); color: var(--seal-ink); }
+/* calendar legend on one line */
+.legend-row { gap: 6px 14px; font-size: 12.5px; }
+/* week view: desktop only */
+.week { display: none; }
+@media (min-width: 1024px) {
+  .week { display: grid; gap: 10px; margin-top: 8px; }
+  .week .eyebrow { margin: 0; }
+  .week-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); overflow: hidden; }
+  .week-grid li { display: flex; flex-direction: column; gap: 6px; min-height: 108px; padding: 10px 10px 12px; border-left: 1px solid var(--line); min-width: 0; }
+  .week-grid li:first-child { border-left: 0; }
+  .week-grid li.is-today { background: color-mix(in srgb, var(--soft) 55%, var(--card)); }
+  .wk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+  .wk-day { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .is-today .wk-day { color: var(--ink); }
+  .wk-date { font: 600 17px/1 var(--serif); color: var(--ink); }
+  .wk-item { display: block; padding: 5px 6px; border-radius: 8px; background: var(--soft); font-size: 12.5px; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+  .wk-item b { display: block; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+  /* NEXT UP gets room to lead */
+  .vow-card.lead { padding: 24px 26px 12px; }
+  .vow-card.lead .title { font-size: 24px; }
+  .vow-card.lead .vc-time .countdown { font-size: 44px; }
+  .home-layout { gap: 28px; }
+}
+/* quieter secondary links: red is for the next action */
+.opts-edit { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+
+/* ---- v11 round 4: calm phone home, week agenda, aligned cards ---- */
+/* debt: a ledger line with a small label, not a headline */
+.owed-note .owed-h { font: 600 12px/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.owed-note .owed-h .owed-amt { color: var(--ink); }
+.owed-note { gap: 4px; padding: 14px 18px; }
+.owed-note .owed-why { font-size: 13px; }
+/* phone home: the record lives on History; the rail keeps only recent results */
+@media (max-width: 1023px) {
+  .home-layout .rail .record { display: none; }
+  .home-layout .rail > .recent { border-top: 0; }
+}
+/* every vow card shares one inset on desktop so edges line up */
+@media (min-width: 1024px) {
+  .vow-card, .vow-card.lead { padding: 24px 26px 12px; }
+  .vow-card .title { font-size: 22px; }
+  .vow-card.lead .title { font-size: 24px; }
+}
+/* week: calendar row + agenda */
+@media (min-width: 1024px) {
+  .week { display: grid; gap: 12px; margin-top: 4px; padding: 18px 22px 10px; }
+  .week-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .week-head .eyebrow { margin: 0; }
+  .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; border: 0; background: none; border-radius: 0; overflow: visible; }
+  .week-grid li { display: grid; justify-items: center; gap: 2px; min-height: 0; padding: 8px 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .week-grid li:first-child { border-left: 1px solid var(--line); }
+  .week-grid li.is-today { background: var(--soft); border-color: color-mix(in srgb, var(--ink) 25%, var(--line)); }
+  .wk-day { font-size: 11.5px; }
+  .wk-date { font: 600 18px/1.2 var(--serif); }
+  .wk-dot { width: 6px; height: 6px; border-radius: 50%; background: transparent; margin-top: 2px; }
+  .week-grid li.has .wk-dot { background: var(--ink); }
+  .agenda { list-style: none; margin: 0; padding: 0; }
+  .agenda li { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; align-items: baseline; gap: 16px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .ag-when { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ag-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ag-stake { font-size: 14px; font-variant-numeric: tabular-nums; }
+}
+/* one focus ring on text fields */
+input:focus-visible, textarea:focus-visible { outline: 2px solid color-mix(in srgb, var(--seal) 45%, transparent); outline-offset: 1px; box-shadow: none; }
 </style>
 </head>
 <body>
@@ -568,6 +767,7 @@ details.more-info[open] > summary::after { transform: translateY(2px) rotate(-13
 </svg>
 
 <main class="wrap" id="view" tabindex="-1"></main>
+<footer class="site-foot"><div class="wrap"><span>Vow</span><span>Free, no account</span><span>Works offline</span><span>Your data stays on this device</span><span class="spacer"></span><a href="#settings">Back up your data</a></div></footer>
 <dialog id="dlg" aria-labelledby="dlg-title"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1293,7 +1493,7 @@ function owedBanner() {
     <h2 class="owed-h" id="owed-h">You owe <span class="owed-amt">${money(total)}</span></h2>
     <ul class="list">${unpaid.map((d) => `<li>
       <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}"<br><span class="nw">${fmtWhen(d.at)}</span>${d.askedAt ? ` <span class="nw">· asked ${esc(debtWitness(d).who)} to confirm</span>` : ""}</span></div>
-      <button class="btn" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
+      <button class="btn quiet" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
     <p class="small muted owed-why">Pay the cause yourself, then log the receipt.</p>
   </section>`;
 }
@@ -1349,15 +1549,15 @@ function vowCard(v, lead = false) {
     <details class="more"><summary>More options</summary>
       <div class="menu" role="group" aria-label="Vow options">
         <p class="menu-label">Change the vow</p>
-        <button class="menu-item" data-act="raise" data-id="${v.id}">Raise stake</button>
-        <button class="menu-item" data-act="lower" data-id="${v.id}">Lower stake</button>
-        ${v.kind === "once" ? `<button class="menu-item" data-act="push" data-id="${v.id}">Push deadline</button>` : ""}
-        <button class="menu-item" data-act="proof" data-id="${v.id}">Change proof type</button>
-        <button class="menu-item" data-act="pass" data-id="${v.id}">Use a life-happens pass <span class="menu-note">${v.witnessPub ? `${esc(v.witness)} approves` : "1 per 30 days"}</span></button>
+        <button class="menu-item" data-act="raise" data-id="${v.id}"><span>Raise stake</span><span class="menu-note">Instant</span></button>
+        <button class="menu-item" data-act="lower" data-id="${v.id}"><span>Lower stake</span><span class="menu-note">Takes 24 h</span></button>
+        ${v.kind === "once" ? `<button class="menu-item" data-act="push" data-id="${v.id}"><span>Push deadline</span><span class="menu-note">Takes 24 h</span></button>` : ""}
+        <button class="menu-item" data-act="proof" data-id="${v.id}"><span>Change proof</span><span class="menu-note">Takes 24 h</span></button>
+        <button class="menu-item" data-act="pass" data-id="${v.id}"><span>Excuse one deadline</span><span class="menu-note">${v.witnessPub ? `${esc(v.witness)} approves` : "1 per 30 days"}</span></button>
         <p class="menu-label">Share</p>
-        <button class="menu-item" data-act="witness" data-id="${v.id}">${v.witness ? "Send to witness" : "Add a witness"}</button>
-        <button class="menu-item" data-act="ics" data-id="${v.id}">Add to calendar</button>
-        <button class="menu-item danger" data-act="delete" data-id="${v.id}">Delete vow</button>
+        <button class="menu-item" data-act="witness" data-id="${v.id}"><span>${v.witness ? "Send to witness" : "Add a witness"}</span></button>
+        <button class="menu-item" data-act="ics" data-id="${v.id}"><span>Add to calendar</span></button>
+        <button class="menu-item danger" data-act="delete" data-id="${v.id}"><span>Delete vow</span><span class="menu-note">Takes 24 h</span></button>
       </div>
     </details>
     </div>
@@ -1398,27 +1598,61 @@ function viewHome() {
   const nextOcc = byDue.length ? openOcc(byDue[0]) : null;
   const owedTotal = S.debts.filter((d) => !d.paidAt).reduce((a, d) => a + d.amount, 0);
   return `<div class="hero row home-hero"><div><h1>Your vows</h1>
-      <p class="hero-sub">${active.length} active${nextOcc ? ` · next deadline in <b data-left="${nextOcc.due}">${fmtLeft(nextOcc.due - now())}</b>` : ""}${owedTotal ? ` · <a class="owed-link" href="#owed">${money(owedTotal)} owed</a>` : ""}</p></div>
+      <p class="hero-sub">${active.length} active${owedTotal ? ` · <a class="owed-link" href="#owed">${money(owedTotal)} owed</a>` : ""}</p></div>
     <span class="spacer"></span><a class="btn secondary new-vow" href="#new"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New vow</a></div>
     <div class="layout home-layout">
     <aside class="side stack">
       ${owedBanner()}
+      <div class="rail">
       <section class="record" aria-labelledby="record-h">
         <h2 class="eyebrow" id="record-h">Your record</h2>
         <div class="stats">
           <div class="stat"><b>${st.kept}</b><span>Kept</span></div>
           <div class="stat"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>Kept rate</span></div>
-          <div class="stat"><b>${st.streak}</b><span>Streak, best ${st.best}</span></div>
-          <div class="stat"><b>${money(st.saved)}</b><span>Kept safe</span></div>
+          <div class="stat"><b>${st.streak}</b><span>Streak</span></div>
+          <div class="stat"><b>${money(st.saved)}</b><span>Not lost</span></div>
         </div>
       </section>
+      ${recentCard()}
+      </div>
     </aside>
     <div class="main stack">
       ${active.length ? byDue.map((v, n) => vowCard(v, n === 0)).join("") : `<div class="card empty"><p>No active vows. <a href="#new">Make one</a>.</p></div>`}
+      ${active.length ? weekStrip(byDue) : ""}
       ${witnessSection()}
-      ${recentCard()}
     </div>
     </div>`;
+}
+
+function weekStrip(list) {
+  const start = new Date(now());
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  const dueAt = (v) => (openOcc(v) || {}).due;
+  const dayName = (d, i) => (i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString(undefined, { weekday: "short" }));
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(start);
+    day.setDate(day.getDate() + i);
+    const next = new Date(day);
+    next.setDate(next.getDate() + 1);
+    const count = list.filter((v) => dueAt(v) >= day.getTime() && dueAt(v) < next.getTime()).length;
+    const label = i === 0 ? "Today" : day.toLocaleDateString(undefined, { weekday: "short" });
+    days.push(`<li class="${i === 0 ? "is-today" : ""}${count ? " has" : ""}"><span class="wk-day">${label}</span><span class="wk-date">${day.getDate()}</span><span class="wk-dot" aria-hidden="true"></span></li>`);
+  }
+  const soon = list.filter((v) => dueAt(v) >= start.getTime() && dueAt(v) < end.getTime());
+  const agenda = soon.map((v) => {
+    const due = new Date(dueAt(v));
+    const offset = Math.round((new Date(due).setHours(0, 0, 0, 0) - start.getTime()) / DAY);
+    const time = due.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    return `<li><span class="ag-when">${dayName(due, offset)}, ${time}</span><span class="ag-title">${esc(v.title)}</span><span class="ag-stake">${money(v.stake)}</span></li>`;
+  }).join("");
+  return `<section class="week card" aria-labelledby="week-h">
+    <div class="week-head"><h2 class="eyebrow" id="week-h">The next 7 days</h2><span class="small muted">${soon.length ? `${soon.length} due` : "Nothing due"}</span></div>
+    <ol class="week-grid" aria-hidden="true">${days.join("")}</ol>
+    ${soon.length ? `<ul class="agenda">${agenda}</ul>` : ""}
+  </section>`;
 }
 
 function recentCard() {
@@ -1465,7 +1699,7 @@ function viewNew() {
       <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" aria-describedby="f-witness-hint">
       <span class="hint" id="f-witness-hint">They accept on their phone and confirm your proof. Leave empty to go solo.</span></label>
 
-    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Proof, deadline and stake</span><span id="opts-sum">Photo proof · Tonight · $10 to a charity</span></span><span class="opts-edit">Change</span></summary>
+    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Proof, deadline and stake</span><span id="opts-sum">Photo · Tonight · $10</span></span><span class="opts-edit">Change</span></summary>
     <div class="stack" style="margin-top:8px">
     <fieldset><legend class="legend">Proof I'll show</legend>
       <div class="chips">
@@ -1591,10 +1825,19 @@ function heatmap() {
     const label = w === 0 && first.getDate() <= 21 ? first : startsMonth ? last : null;
     months.push(`<span>${label ? label.toLocaleDateString(undefined, { month: "short" }) : ""}</span>`);
   }
-  return `<section class="card stack"><h2>Last 12 weeks</h2>
+  const tally = Object.values(byDay).reduce((acc, status) => {
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+  const tallyText = [
+    tally.kept ? `${tally.kept} kept` : "",
+    tally.broken ? `${tally.broken} broken` : "",
+    tally.excused ? `${tally.excused} excused` : "",
+  ].filter(Boolean).join(" · ") || "No settled days yet";
+  return `<section class="card stack heat-card"><div class="heat-head"><h2>Last 12 weeks</h2><p class="small muted">${tallyText}</p></div>
     <div class="heat-months" aria-hidden="true">${months.join("")}</div>
     <div class="heat" role="img" aria-label="Calendar of kept, broken and excused days over the last 12 weeks">${cells.join("")}</div>
-    <ul class="legend-row small muted" aria-hidden="true"><li><i class="sw kept"></i>Kept</li><li><i class="sw broken"></i>Broken</li><li><i class="sw excused"></i>Excused</li><li><i class="sw"></i>No vow</li><li><i class="sw today"></i>Today</li></ul></section>`;
+    <ul class="legend-row small muted" aria-hidden="true"><li><i class="sw kept"></i>Kept</li><li><i class="sw broken"></i>Broken</li><li><i class="sw excused"></i>Excused</li><li><i class="sw today"></i>Today</li></ul></section>`;
 }
 
 function viewHistory() {
@@ -1629,12 +1872,16 @@ function viewHistory() {
           <span class="small muted">${fmtWhen(o.resolvedAt || o.due)} · ${money(o.stake)}${o.proof && o.proof.unconfirmed ? " · witness didn't answer" : ""}${o.proof && o.proof.instead ? " · note instead of photo" : ""}${o.excusedBy === "witness" ? ` · approved by ${esc(v.witness)}` : ""}${o.proof && o.proof.text ? ` · "${esc(o.proof.text)}"` : ""}${o.reason ? ` · ${esc(o.reason)}` : ""}</span></div></li>`).join("")}</ul>`
         : `<p class="muted">Nothing yet. Kept and broken vows show up here.</p>`}
     </section>
-    ${S.debts.length ? `<section class="card stack"><h2>Payments</h2><ul class="list">${S.debts.slice().reverse().map((d) => `<li><div style="flex:1">
-      <b>${money(d.amount)}</b> to ${esc(d.to)} <span class="pill ${d.paidAt ? "kept" : "broken"}">${d.paidAt ? "Paid" : "Unpaid"}</span><br>
-      <span class="small muted">"${esc(d.title)}"${d.paidAt ? ` · paid ${fmtWhen(d.paidAt)} · receipt: ${esc(d.receipt)}` : ""}</span></div>
-      ${d.receiptPhoto ? `<img class="thumb" src="${d.receiptPhoto}" alt="Receipt for ${esc(d.title)}">` : ""}</li>`).join("")}</ul></section>` : ""}
+    ${paymentsCard()}
   </div>
   </div>`;
+}
+
+function paymentsCard() {
+  return `${S.debts.length ? `<section class="card stack payments"><h2>Payments</h2><ul class="list">${S.debts.slice().reverse().map((d) => `<li><div style="flex:1">
+      <b>${money(d.amount)}</b> to ${esc(d.to)} <span class="pill ${d.paidAt ? "kept" : "broken"}">${d.paidAt ? "Paid" : "Unpaid"}</span><br>
+      <span class="small muted">"${esc(d.title)}"${d.paidAt ? ` · paid ${fmtWhen(d.paidAt)} · receipt: ${esc(d.receipt)}` : ""}</span></div>
+      ${d.receiptPhoto ? `<img class="thumb" src="${d.receiptPhoto}" alt="Receipt for ${esc(d.title)}">` : ""}</li>`).join("")}</ul></section>` : ""}`;
 }
 
 function viewSettings() {
@@ -1644,10 +1891,12 @@ function viewSettings() {
     <section class="set-row" aria-labelledby="set-pref">
       <div class="set-head"><h2 id="set-pref">Preferences</h2><p class="small muted">How you appear to your witness and how money is shown.</p></div>
       <div class="card stack">
+        <div class="pref-grid">
         <label class="field"><span>Your name <span class="muted small">(shown to your witness)</span></span>
           <input type="text" id="s-name" value="${esc(s.name)}" maxlength="40"></label>
-        <label class="field"><span>Currency symbol</span>
+        <label class="field"><span>Currency</span>
           <input type="text" id="s-cur" value="${esc(s.currency)}" maxlength="4"></label>
+        </div>
         <fieldset><legend class="legend">Theme</legend><div class="chips">
           ${["auto", "light", "dark"].map((x) => `<label><input type="radio" name="theme" value="${x}" ${s.theme === x ? "checked" : ""}><span>${x[0].toUpperCase() + x.slice(1)}</span></label>`).join("")}
         </div></fieldset>
@@ -1705,6 +1954,15 @@ function viewInvite(p) {
       <p class="small muted">Later, open Vow and tap <b>Confirm proof</b> on the day you've seen it.</p>
     </div>
     <p class="small muted"><a href="#">Open Vow</a></p>
+  </section>
+  <section class="witness-job" aria-labelledby="wj-h">
+    <h2 class="eyebrow" id="wj-h">What you'll do</h2>
+    <ol class="steps">
+      <li><b>Accept and send the link back.</b> One tap. No account, nothing to install.</li>
+      <li><b>Confirm their proof.</b> ${esc(who)} sends you each check-in. You confirm it only if it's real.</li>
+      <li><b>Keep them honest if they miss.</b> They owe ${esc(p.s)} to ${esc(p.to)}. You can confirm when it's paid.</li>
+    </ol>
+    <p class="small muted">Your role lives on this phone only. ${esc(who)} never sees your other data.</p>
   </section>`;
 }
 function viewBail(p) {
@@ -2141,7 +2399,7 @@ function wireNew() {
       ? (f.when.value === "custom" ? "custom deadline" : $(`input[name=when][value="${f.when.value}"]`, f).nextElementSibling.textContent)
       : "repeats";
     const stakeText = f.stake.value === "custom" ? money(Number($("#f-stake").value) || 0) : money(Number(f.stake.value));
-    $("#opts-sum").textContent = `${proofLabel[f.proof.value]} proof · ${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"}`;
+    $("#opts-sum").textContent = `${proofLabel[f.proof.value]} · ${whenText} · ${stakeText}`;
     const titleText = $("#f-title").value.trim();
     const witnessText = $("#f-witness").value.trim();
     const blank = (s) => `<span class="pv-blank">${s}</span>`;
@@ -2406,7 +2664,11 @@ function checkIn(v) {
         video.hidden = true;
         video.closest(".cam").classList.add("off");
         $("#pcam-hint", d).classList.add("notice");
-        $("#pcam-hint", d).textContent = "Vow can't open a camera here. Allow camera access, check in from your phone, or write a note instead.";
+        $("#pcam-hint", d).textContent = "Vow can't open a camera here. Write a note instead, or allow camera access and try again.";
+        snap.closest(".row").hidden = true;
+        submit.hidden = true;
+        $("#pnote-alt", d).classList.remove("ghost");
+        $("#pnote-alt", d).classList.add("primary");
       });
       snap.addEventListener("click", () => {
         if (!video.videoWidth) {
@@ -2684,9 +2946,9 @@ async function act(kind, v) {
       toast("Passes only work before the deadline.");
       return;
     }
-    const val = await ask({ title: "Life happens pass", body: v.witnessPub
+    const val = await ask({ title: "Excuse one deadline", body: v.witnessPub
       ? `One per 30 days, only before the deadline. ${v.witness} has to approve it. Until they do, the deadline still stands (with 24 h extra for their answer).`
-      : "One per 30 days, only before the deadline. This check-in is excused and your witness should know why.", label: "What happened?", ok: v.witnessPub ? `Ask ${v.witness}` : "Use my pass" });
+      : "One per 30 days, only before the deadline. This check-in is excused and your witness should know why.", label: "What happened?", ok: v.witnessPub ? `Ask ${v.witness}` : "Excuse it" });
     if (val === null) {
       return;
     }
@@ -2708,7 +2970,7 @@ async function act(kind, v) {
     save();
     tick();
     render();
-    tellWitness("Pass used", v, `I used my one "life happens" pass this month on "${v.title}": ${o.reason}.`);
+    tellWitness("Deadline excused", v, `I excused one deadline this month (my 1 per 30 days) on "${v.title}": ${o.reason}.`);
   } else if (kind === "proof") {
     const pendingProof = (v.pending || []).some((p) => p.type === "proof");
     if (pendingProof) {

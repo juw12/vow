@@ -28,7 +28,7 @@ Live: https://juw12.github.io/vow/
 - **QR hand-offs.** Every link you pass between phones (invite, acceptance, proof confirmation, walk-away, payment
   request and confirmation) is also shown as a QR code, so your witness can scan it from your screen.
 - **Honest focus timer.** The timer counts real elapsed time; leaving Vow for more than 15 seconds restarts the session.
-- One "life happens" pass per 30 days, only before the deadline. With an accepted witness the pass is a signed
+- "Excuse one deadline": one per 30 days, only before the deadline. With an accepted witness the excuse is a signed
   request ("pass:<check-in>") they approve; until then the deadline stands, with 24 hours extra for their answer.
 - Optional escalation: stake x1.5 per miss, capped at 4x.
 - Streaks, per-vow history dots, 12-week heatmap, monthly summary, calendar (.ics) reminders, light/dark theme.
