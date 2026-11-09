@@ -101,3 +101,11 @@ Harness fix: tools/shoot_ui.py now waits up to 3 s for the camera request to set
 | r1 | destructive confirms (Schedule delete, Erase) as red outline instead of the primary fill; plain dot markers in "What happens next"; quieter second countdown | 7.95 | not kept |
 Stopped: 9 straight candidates across runs 7-9 scored 7.95-8.20 against a best of 8.30 with about +/-0.3 judge noise, and judges repeatedly asked for changes already on screen (grouped More options, outline delete). The council can no longer tell these candidates apart, so more rounds are noise-chasing. v12 stays live.
 Best unshipped candidate: hone/ui9/r1_app (r4 + destructive/primary split). Contains real UX fixes (no-camera retry, balanced desktop columns, separate danger style) that the council did not reward.
+
+
+## v13 ship (2026-11-09) - user-directed ("go")
+- Shipped hone/ui9/r1_app (run-8 r4 + destructive/primary split) on Juwen's go, past the plateaued council.
+- Gate fix before ship: three new text colours used color-mix(), which computes to color(srgb ...) and broke the
+  AA contrast gate's parser; replaced with plain tokens (--muted / --seal / --ink). All 8 gate suites then pass.
+- Pushed juw12/vow 817c394, sw vow-v13, verified live (sw + pf-foot / destructive markers). Landing shot, portfolio
+  card and desktop image updated; sync-cards (juw12/portfolio) run succeeded.
