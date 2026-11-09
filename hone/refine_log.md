@@ -72,3 +72,10 @@ tab switch; witness onboarding friction (QR/one-tap); EXIF capture-time check; w
 - Merged: v5 index.html as base; ported refined-paper design tokens/CSS, QR hand-offs (incl. v5 payment ask + #paid confirmation), witness chip, 24h walk-away copy, wall-clock focus timer.
 - Dropped my EXIF photo-date check and my own #paidreq flow as superseded by v5.
 - Checks on merged app (v5 test files kept, they are stricter): check.py all gates incl. G11 far-off delete, check_witness 13/13 incl. forged walk-away, check_backup PASS, check_extras 20/20, check_proof 13/13, slop_check 0 blockers 0 warnings, contrast AA both themes (lowest 5.05:1).
+
+## Run 7 (ui7, rubric ui-v1) - baseline v11 = 7.90, keep needs >= 8.20 and b_wins
+| round | change | council | pairwise vs v11 | result |
+|---|---|---|---|---|
+| r1 | desktop app shell: fixed 232px left sidebar (brand, vertical nav, trust notes at its foot) | 8.30 (C1 8, C2 8, C3 8, C4 9, C5 9) | 0-1-2 | not kept (b_wins false) |
+| r2 | r1 + sidebar tone full page height, Home side panel back in card chrome, idea chips on an even 2/4-column grid, "What happens next" as a numbered card, disabled primary as faded red, desktop Settings as label column + card column | 8.30 (C1 8, C2 8, C3 8, C4 9, C5 9) | B 2-0-1, b_wins true | KEPT, all 8 gate suites pass -> shipped v12 |
+Note: the first r2 gate run and pair run collided with a parallel judge call (timeouts, judges unreachable); both were re-run alone and passed.

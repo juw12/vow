@@ -739,6 +739,146 @@ details.opts > summary #opts-sum { grid-column: 1 / -1; grid-row: 2; padding-lef
 }
 /* one focus ring on text fields */
 input:focus-visible, textarea:focus-visible { outline: 2px solid color-mix(in srgb, var(--seal) 45%, transparent); outline-offset: 1px; box-shadow: none; }
+
+/* ---- v11 round 5: one card leads, everything else is a quiet rail ---- */
+/* side rail on Home: no card chrome, just hairlines */
+.home-layout .side .owed-note, .home-layout .side .rail { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.home-layout .side .owed-note { padding: 14px 2px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.home-layout .side .rail > .record, .home-layout .side .rail > .recent { padding-left: 2px; padding-right: 2px; }
+.home-layout .side .rail > .recent { border-top: 1px solid var(--line); }
+.home-layout .side .rail { border-bottom: 1px solid var(--line); }
+@media (min-width: 1024px) {
+  .home-layout .side { padding-top: 2px; }
+  .home-layout .side .owed-note { border-top: 0; padding-top: 4px; }
+}
+/* countdown lockup: caption and number sized as one unit */
+.vc-time-label { font-size: 12px; letter-spacing: .1em; margin-bottom: 2px; }
+@media (min-width: 1024px) {
+  .vow-card.lead .vc-time .countdown { font-size: 40px; }
+  .vow-card:not(.lead) .vc-time .countdown { font-size: 28px; }
+}
+/* week row: every day cell alike; today is marked by its label only */
+@media (min-width: 1024px) {
+  .week-grid li.is-today { background: var(--card); border-color: var(--line); }
+  .week-grid li.is-today .wk-day { color: var(--seal); }
+  .week-grid li.is-today .wk-date { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; text-decoration-color: var(--seal); }
+}
+/* camera placeholder says what will happen */
+.cam::after { content: "Your camera opens here"; }
+/* settings on desktop: one centred column, heading above each card */
+@media (min-width: 1024px) {
+  .settings { max-width: 720px; margin: 0 auto; }
+  .set-row { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
+  .set-head p { max-width: none; }
+  .set-row .card .field input { max-width: none; }
+  .hero:has(+ .settings) { max-width: 720px; margin-left: auto; margin-right: auto; }
+}
+
+/* ---- v12 (hone run 7): desktop app shell ---- */
+@media (min-width: 1024px) {
+  :root { --rail: 232px; }
+  body { padding-left: var(--rail); }
+  header.top {
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--rail); z-index: 6;
+    background: color-mix(in srgb, var(--soft) 45%, var(--bg));
+    backdrop-filter: none; border-bottom: 0; border-right: 1px solid var(--line);
+  }
+  header.top .wrap {
+    display: flex; flex-direction: column; align-items: stretch; gap: 22px;
+    max-width: none; height: 100%; margin: 0; padding: 22px 14px 0;
+  }
+  header.top .brand { margin: 0 0 4px; padding: 0 10px; }
+  header.top .brand svg { width: 30px; height: 30px; }
+  header.top .brand b { font-size: 22px; }
+  header.top nav.tabs { display: grid; gap: 2px; }
+  header.top nav.tabs a {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px;
+    font-size: 15px; font-weight: 600; color: var(--muted); transition: background .12s ease, color .12s ease;
+  }
+  header.top nav.tabs a:hover { background: color-mix(in srgb, var(--soft) 80%, var(--bg)); color: var(--ink); }
+  header.top nav.tabs a[aria-current="page"] { background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  header.top nav.tabs a[aria-current="page"] .ic { color: var(--seal); }
+  header.top nav.tabs .ic { width: 19px; height: 19px; }
+  /* the trust notes live at the foot of the sidebar */
+  .site-foot {
+    position: fixed; left: 0; bottom: 0; width: var(--rail); z-index: 7;
+    border-top: 0; background: transparent; font-size: 12.5px;
+  }
+  .site-foot .wrap {
+    display: grid; gap: 6px; max-width: none; margin: 0; padding: 0 24px 24px;
+  }
+  .site-foot span + span:not(.spacer)::before { content: none; }
+  .site-foot .sf-name { display: none; }
+  .site-foot .spacer { display: none; }
+  .site-foot a { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+  /* content column: centred in the space beside the rail */
+  main.wrap { padding-top: 12px; padding-bottom: 64px; }
+  .hero { padding-top: 32px; }
+}
+
+/* ---- v12 round 2 ---- */
+/* sidebar tone painted on the page itself so it never stops short */
+@media (min-width: 1024px) {
+  body {
+    background:
+      linear-gradient(to right,
+        color-mix(in srgb, var(--soft) 45%, var(--bg)) 0,
+        color-mix(in srgb, var(--soft) 45%, var(--bg)) calc(var(--rail) - 1px),
+        var(--line) calc(var(--rail) - 1px),
+        var(--line) var(--rail),
+        var(--bg) var(--rail)),
+      var(--bg);
+    min-height: 100vh;
+  }
+}
+/* Home side panel: the same card family as the vow cards */
+.home-layout .side { display: grid; gap: 12px; align-content: start; }
+.home-layout .side .owed-note, .home-layout .side .rail {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.home-layout .side .owed-note { padding: 16px 18px; }
+.home-layout .side .rail > .record, .home-layout .side .rail > .recent { padding-left: 18px; padding-right: 18px; }
+@media (min-width: 1024px) {
+  .home-layout .side { padding-top: 0; }
+  .home-layout .side .owed-note { padding-top: 16px; }
+}
+/* idea chips: an even grid, same component at every width */
+.chips.ideas {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  flex-wrap: initial; overflow: visible; margin: 2px 0 4px; padding-right: 0;
+}
+.chips.ideas button { width: 100%; justify-content: center; text-align: center; padding: 6px 8px; }
+@media (min-width: 640px) {
+  .chips.ideas { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* What happens next: a card with the same numbered markers as the form */
+.note-card {
+  padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card);
+}
+.note-card .eyebrow { margin: 0 0 12px; }
+.note-card .steps { list-style: none; padding-left: 0; counter-reset: nstep; gap: 12px; font-size: 14px; }
+.note-card .steps li { counter-increment: nstep; position: relative; padding-left: 34px; color: var(--muted); line-height: 1.45; }
+.note-card .steps li b { color: var(--ink); font-weight: 600; }
+.note-card .steps li::before {
+  content: counter(nstep); position: absolute; left: 0; top: 0;
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 12px/1 var(--sans); color: var(--muted); border: 1px solid var(--line); background: var(--bg);
+}
+.note-card > .small { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
+/* a disabled primary still reads as the primary, just not yet available */
+.btn.primary[disabled] {
+  background: color-mix(in srgb, var(--seal) 38%, var(--card));
+  border-color: transparent; color: var(--seal-ink); box-shadow: none; cursor: not-allowed;
+}
+/* desktop Settings: label column + card column on the shared left edge */
+@media (min-width: 1024px) {
+  .settings { max-width: none; margin: 0; }
+  .hero:has(+ .settings) { max-width: none; margin-left: 0; margin-right: 0; }
+  .set-row { grid-template-columns: 260px minmax(0, 1fr); gap: 48px; padding: 28px 0; }
+  .set-row:first-child { padding-top: 8px; }
+  .set-head { padding-top: 14px; }
+  .set-head p { max-width: 30ch; }
+}
 </style>
 </head>
 <body>
@@ -767,7 +907,7 @@ input:focus-visible, textarea:focus-visible { outline: 2px solid color-mix(in sr
 </svg>
 
 <main class="wrap" id="view" tabindex="-1"></main>
-<footer class="site-foot"><div class="wrap"><span>Vow</span><span>Free, no account</span><span>Works offline</span><span>Your data stays on this device</span><span class="spacer"></span><a href="#settings">Back up your data</a></div></footer>
+<footer class="site-foot"><div class="wrap"><span class="sf-name">Vow</span><span>Free, no account</span><span>Works offline</span><span>Your data stays on this device</span><span class="spacer"></span><a href="#settings">Back up your data</a></div></footer>
 <dialog id="dlg" aria-labelledby="dlg-title"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

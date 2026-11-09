@@ -121,3 +121,16 @@ Council-judged against rubric ui-v1: 7.95 vs the v8-based r1 at 6.65 in the same
 
 Tried and rejected this run (kept in hone/refine_log.md): ink-coloured selected chips and outline destructive
 confirms (r4, lost 1-0-2), borderless secondary Home sections (r5, +0.27 and 0-0-3 ties).
+
+## v12 (hone run 7, round 2): desktop app shell
+
+Council-judged against rubric ui-v1: 8.30 (C1 8, C2 8, C3 8, C4 9, C5 9) vs v11 at 7.90; swapped pairwise 2-0-1.
+
+- Desktop (>= 1024px) is an app shell: a fixed 232px left sidebar with the seal, vertical navigation
+  (active page as a card with a red icon) and the trust notes plus "Back up your data" at its foot.
+  The sidebar tone is painted on the page, so it runs the full height of long pages.
+- Home side panel (debt, record, recently settled) uses the same card chrome as the vow cards.
+- Idea chips sit on an even grid: 2 columns on phones, 4 from 640px.
+- "What happens next" on Make a vow is a card with numbered markers that echo the form steps.
+- A disabled primary button stays a primary (faded brick red), not an outline.
+- Desktop Settings: a label column (title and one-line note) beside each card, on the shared left edge.

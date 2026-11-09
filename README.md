@@ -36,7 +36,8 @@ Live: https://juw12.github.io/vow/
 
 ## Design
 The UI follows `design.md` ("refined paper": cream paper, serif headings, one brick-red accent, no purple, no emoji),
-chosen by a judged 4-direction bracket (`hone/design-bracket.md`).
+chosen by a judged 4-direction bracket (`hone/design-bracket.md`). On desktop it runs as an app shell with a
+left sidebar; on phones it keeps the bottom tab bar.
 
 ## Honest limits
 - Vow never touches money. It cannot charge you; your witness is what makes it real.
