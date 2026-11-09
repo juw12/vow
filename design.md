@@ -134,3 +134,22 @@ Council-judged against rubric ui-v1: 8.30 (C1 8, C2 8, C3 8, C4 9, C5 9) vs v11 
 - "What happens next" on Make a vow is a card with numbered markers that echo the form steps.
 - A disabled primary button stays a primary (faded brick red), not an outline.
 - Desktop Settings: a label column (title and one-line note) beside each card, on the shared left edge.
+
+## v13 (user-directed ship after hone runs 8-9)
+
+Shipped on Juwen's go after runs 8-9 plateaued (council 7.95-8.20 against v12's 8.30; the council stopped
+separating candidates). Shipped for the usability fixes below, with all 8 gate suites passing.
+
+- Review, then seal: "Seal my vow" sits inside the "Your vow" summary card, under the terms it commits to.
+- Witness acceptance shows as an "Accepted" pill; "I paid" is an anchored outline button.
+- Cards lift off the paper with a soft shadow and a firmer edge; menu labels are eyebrows, not tinted bands.
+- Desktop New vow: "What happens next" sits under the form, so both columns end together.
+  On phones the order is form, "Your vow" + seal, then "What happens next".
+- Desktop History: Payments sits under the 12-week calendar; on phones check-ins come first.
+- Check-in without a camera: no empty viewfinder. A notice with a camera icon, "Write a note instead"
+  as the primary, and "Cancel" / "Retry camera" side by side.
+- Dialog Cancel/Close buttons share one outlined secondary style.
+- More options: Delete vow sits in its own "Remove" group.
+- Destructive confirms ("Schedule delete", "Erase") are red outline buttons, never the solid primary red.
+- "What happens next" uses plain dot markers, so it no longer echoes the numbered form steps.
+- Softer NEXT UP border; the week strip has no card chrome; the second vow's countdown is quieter; "Change" reads "Edit".

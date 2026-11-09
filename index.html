@@ -879,6 +879,108 @@ input:focus-visible, textarea:focus-visible { outline: 2px solid color-mix(in sr
   .set-head { padding-top: 14px; }
   .set-head p { max-width: 30ch; }
 }
+
+/* ---- v13 round 3: one status shape, anchored actions, calm disabled state ---- */
+.meta .ok {
+  display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--kept) 45%, var(--line));
+  font-size: 12px; font-weight: 600; line-height: 1.5; vertical-align: 1px;
+}
+.owed-note .list li { align-items: center; }
+.owed-note button[data-pay] {
+  min-height: 34px; padding: 4px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card); color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.owed-note button[data-pay]:hover { background: color-mix(in srgb, var(--soft) 60%, var(--card)); }
+.btn.primary[disabled] {
+  background: var(--soft); border-color: var(--soft); color: color-mix(in srgb, var(--muted) 85%, var(--card));
+  box-shadow: none;
+}
+.home-layout .side { gap: 16px; }
+.home-layout .side .rail > .recent .list li { padding-top: 12px; padding-bottom: 12px; }
+
+/* ---- v13 round 5: review, then seal ---- */
+.pv-seal { display: grid; gap: 10px; margin-top: 16px; }
+.pv-seal .seal-note { margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
+
+/* ---- v13 run 8 round 1: separation, labels, calm notices ---- */
+:root { --edge: color-mix(in srgb, var(--line) 80%, var(--ink) 8%); }
+.card, .owed-note, .rail, .note-card, .home-layout .side .owed-note, .home-layout .side .rail {
+  border-color: var(--edge);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent), 0 4px 14px -10px color-mix(in srgb, var(--ink) 18%, transparent);
+}
+.vow-card.lead { box-shadow: 0 1px 2px color-mix(in srgb, var(--seal) 10%, transparent), 0 8px 22px -14px color-mix(in srgb, var(--seal) 35%, transparent); }
+.vc-time-label { font-size: 12.5px; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.menu-label, .menu-label:first-child {
+  background: transparent; border-top: 1px solid var(--line);
+  padding: 12px 14px 4px; font-size: 11.5px; letter-spacing: .09em; color: var(--muted);
+}
+.menu-label:first-child { border-top: 0; }
+.hint.notice {
+  border-left: 0; border-radius: 10px; padding: 10px 12px;
+  background: color-mix(in srgb, var(--soft) 70%, var(--card)); color: var(--muted);
+}
+.heat span { background: color-mix(in srgb, var(--soft) 72%, var(--line)); }
+@media (max-width: 1023px) {
+  .home-layout { gap: 20px; }
+  .home-layout .side { gap: 16px; }
+}
+
+/* ---- v13 run 8 round 2: balanced columns, no dead camera box ---- */
+.new-main { gap: 16px; }
+@media (max-width: 1023px) {
+  .new-main { display: contents; }
+  .new-main > .note-card { order: 2; }
+}
+.history-layout > .main { order: -1; }
+@media (min-width: 1024px) {
+  .history-layout > .main { order: 0; }
+  .history-layout > .side { display: grid; gap: 16px; }
+}
+.heat span { background: color-mix(in srgb, var(--soft) 88%, var(--line)); }
+.cam.off { display: none; }
+.cam.off + .hint.notice {
+  display: flex; gap: 10px; align-items: flex-start; padding: 14px 14px;
+}
+.cam.off + .hint.notice::before {
+  content: ""; flex: none; width: 20px; height: 20px; margin-top: 1px; background: var(--muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* ---- v13 run 8 round 3: one secondary button in dialog footers ---- */
+dialog .btn.ghost[data-close] {
+  background: var(--card); border-color: color-mix(in srgb, var(--ink) 22%, var(--line));
+}
+dialog .btn.ghost[data-close]:hover { border-color: var(--ink); background: var(--card); }
+.pf-foot:has(> #ok[hidden]) > .spacer { display: none; }
+.pf-foot:has(> #ok[hidden]) > .btn:not([hidden]) { flex: 1; white-space: nowrap; }
+
+/* ---- v13 run 8 round 4: quieter secondary surfaces ---- */
+.vow-card.lead {
+  border-color: color-mix(in srgb, var(--seal) 20%, var(--edge, var(--line)));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent), 0 8px 22px -14px color-mix(in srgb, var(--seal) 35%, transparent);
+}
+.menu-label-danger { color: var(--seal); }
+.menu-label-danger + .menu-item.danger { border-top: 0; box-shadow: none; margin: 0; }
+@media (min-width: 1024px) {
+  .week.card { background: transparent; border-color: transparent; box-shadow: none; padding: 6px 2px 0; }
+  .week .week-grid { box-shadow: none; }
+}
+
+/* ---- v13 run 9 round 1: destructive is not primary; steps vs notes ---- */
+.btn.primary.destructive, .btn.primary.destructive:hover {
+  background: var(--card); color: var(--seal); border: 1.5px solid var(--seal); box-shadow: none;
+}
+.btn.primary.destructive:hover { background: color-mix(in srgb, var(--seal) 8%, var(--card)); }
+.note-card .steps li { padding-left: 20px; }
+.note-card .steps li::before {
+  content: ""; width: 7px; height: 7px; top: 7px; left: 2px; border: 0;
+  background: color-mix(in srgb, var(--muted) 70%, var(--card));
+}
+.vow-card:not(.lead) .vc-time .countdown { color: var(--ink); }
+@media (min-width: 1024px) {
+  .vow-card:not(.lead) .vc-time .countdown { font-size: 26px; }
+}
 </style>
 </head>
 <body>
@@ -1567,7 +1669,7 @@ function openDialog(html, onReady) {
     onReady(dlg);
   }
 }
-function ask({ title, body = "", label, type = "text", value = "", min, ok = "OK" }) {
+function ask({ title, body = "", label, type = "text", value = "", min, ok = "OK", destructive = false }) {
   return new Promise((resolve) => {
     openDialog(`
       <form method="dialog" class="stack" id="askf">
@@ -1577,7 +1679,7 @@ function ask({ title, body = "", label, type = "text", value = "", min, ok = "OK
           <input id="askv" type="${type}" value="${esc(value)}" ${min !== undefined ? `min="${min}"` : ""} required></label>
         <div class="row"><span class="spacer"></span>
           <button type="button" class="btn ghost" data-close>Cancel</button>
-          <button class="btn primary" value="ok">${esc(ok)}</button></div>
+          <button class="btn primary${destructive ? " destructive" : ""}" value="ok">${esc(ok)}</button></div>
       </form>`, (d) => {
       const input = $("#askv", d);
       input.focus();
@@ -1697,6 +1799,7 @@ function vowCard(v, lead = false) {
         <p class="menu-label">Share</p>
         <button class="menu-item" data-act="witness" data-id="${v.id}"><span>${v.witness ? "Send to witness" : "Add a witness"}</span></button>
         <button class="menu-item" data-act="ics" data-id="${v.id}"><span>Add to calendar</span></button>
+        <p class="menu-label menu-label-danger">Remove</p>
         <button class="menu-item danger" data-act="delete" data-id="${v.id}"><span>Delete vow</span><span class="menu-note">Takes 24 h</span></button>
       </div>
     </details>
@@ -1831,7 +1934,8 @@ function viewNew() {
   const ideas = ["Go to the gym", "Write 500 words", "Study for 1 hour", "Run 5 km"];
   return `<div class="hero"><h1>Make a vow</h1><p class="muted">About 30 seconds. The defaults are fine.</p></div>
   <div class="layout">
-  <form id="newf" class="card stack main" novalidate>
+  <div class="main stack new-main">
+  <form id="newf" class="card stack" novalidate>
     <label class="field"><span class="step-label"><span class="step-n">1</span>I will…</span>
       <input type="text" id="f-title" maxlength="80" placeholder="go to the gym for 45 minutes" required autocomplete="off"></label>
     <div class="chips ideas" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
@@ -1839,7 +1943,7 @@ function viewNew() {
       <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" aria-describedby="f-witness-hint">
       <span class="hint" id="f-witness-hint">They accept on their phone and confirm your proof. Leave empty to go solo.</span></label>
 
-    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Proof, deadline and stake</span><span id="opts-sum">Photo · Tonight · $10</span></span><span class="opts-edit">Change</span></summary>
+    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Proof, deadline and stake</span><span id="opts-sum">Photo · Tonight · $10</span></span><span class="opts-edit">Edit</span></summary>
     <div class="stack" style="margin-top:8px">
     <fieldset><legend class="legend">Proof I'll show</legend>
       <div class="chips">
@@ -1905,9 +2009,17 @@ function viewNew() {
       </div>
     </details>
 
-    <p class="seal-note">Once sealed, raising the stake is instant. Lowering, delaying or deleting takes 24 hours.</p>
-    <button class="btn primary block" id="seal-btn">Seal my vow</button>
   </form>
+    <section class="stack note-card">
+      <h2 class="eyebrow">What happens next</h2>
+      <ol class="steps">
+        <li><b>Your witness accepts.</b> They get a link and confirm on their phone. Solo vows skip this.</li>
+        <li><b>Show proof before the deadline.</b> Nothing else happens. The stake stays yours.</li>
+        <li><b>Miss it and you owe the stake.</b> You pay the cause yourself and log the receipt.</li>
+      </ol>
+      <p class="small muted">Typos in the wording can be fixed for 10 minutes after sealing.</p>
+    </section>
+  </div>
   <aside class="side stack">
     <section class="card preview" aria-labelledby="pv-h" aria-live="polite">
       <p class="eyebrow" id="pv-h">Your vow</p>
@@ -1919,15 +2031,10 @@ function viewNew() {
         <div><dt>Proof</dt><dd id="pv-proof">Photo</dd></div>
         <div><dt>Witness</dt><dd id="pv-witness"><span class="pv-blank">Solo, none named</span></dd></div>
       </dl>
-    </section>
-    <section class="stack note-card">
-      <h2 class="eyebrow">What happens next</h2>
-      <ol class="steps">
-        <li><b>Your witness accepts.</b> They get a link and confirm on their phone. Solo vows skip this.</li>
-        <li><b>Show proof before the deadline.</b> Nothing else happens. The stake stays yours.</li>
-        <li><b>Miss it and you owe the stake.</b> You pay the cause yourself and log the receipt.</li>
-      </ol>
-      <p class="small muted">Typos in the wording can be fixed for 10 minutes after sealing.</p>
+      <div class="pv-seal">
+        <button type="submit" form="newf" class="btn primary block" id="seal-btn">Seal my vow</button>
+        <p class="seal-note">Once sealed, raising the stake is instant. Lowering, delaying or deleting takes 24 hours.</p>
+      </div>
     </section>
   </aside>
   </div>`;
@@ -2003,6 +2110,7 @@ function viewHistory() {
   <div class="layout history-layout">
   <aside class="side stack">
     ${heatmap()}
+    ${paymentsCard()}
   </aside>
   <div class="main stack">
     <section class="card stack"><h2>Check-ins</h2>
@@ -2012,7 +2120,6 @@ function viewHistory() {
           <span class="small muted">${fmtWhen(o.resolvedAt || o.due)} · ${money(o.stake)}${o.proof && o.proof.unconfirmed ? " · witness didn't answer" : ""}${o.proof && o.proof.instead ? " · note instead of photo" : ""}${o.excusedBy === "witness" ? ` · approved by ${esc(v.witness)}` : ""}${o.proof && o.proof.text ? ` · "${esc(o.proof.text)}"` : ""}${o.reason ? ` · ${esc(o.reason)}` : ""}</span></div></li>`).join("")}</ul>`
         : `<p class="muted">Nothing yet. Kept and broken vows show up here.</p>`}
     </section>
-    ${paymentsCard()}
   </div>
   </div>`;
 }
@@ -2776,7 +2883,8 @@ function checkIn(v) {
       <p class="hint" id="pcam-hint">Take a live photo now (gallery pictures don't count). It's time-stamped, stays on this device, and unlocks Submit.</p>
       <div class="row"><button type="button" class="btn block" id="psnap" disabled>Take photo</button>
         <button type="button" class="btn ghost" id="pretake" hidden>Retake</button></div>
-      <button type="button" class="btn ghost block" id="pnote-alt">Write a note instead</button>${foot("Submit proof")}</form>`, (d) => {
+      <button type="button" class="btn ghost block" id="pnote-alt">Write a note instead</button>
+      <div class="row pf-foot"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button type="button" class="btn" id="pretry" hidden>Retry camera</button><button class="btn primary" id="ok">Submit proof</button></div></form>`, (d) => {
       let data = null;
       let stream = null;
       const video = $("#pvideo", d);
@@ -2790,26 +2898,42 @@ function checkIn(v) {
         stopCamera(stream);
         noteCheckIn("photo");
       });
-      startCamera(video).then((s) => {
+      const hint = $("#pcam-hint", d);
+      const noteAlt = $("#pnote-alt", d);
+      const retry = $("#pretry", d);
+      const liveHint = hint.textContent;
+      const cameraState = (ok) => {
+        video.hidden = !ok;
+        video.closest(".cam").classList.toggle("off", !ok);
+        hint.classList.toggle("notice", !ok);
+        hint.textContent = ok ? liveHint : "Vow can't open a camera here. Write a note instead, or allow camera access and try again.";
+        snap.closest(".row").hidden = !ok;
+        submit.hidden = !ok;
+        retry.hidden = ok;
+        noteAlt.classList.toggle("ghost", ok);
+        noteAlt.classList.toggle("primary", !ok);
+      };
+      const openCamera = () => startCamera(video).then((s) => {
         stream = s;
         if (!video.isConnected) {
           stopCamera(s);
           return;
         }
+        cameraState(true);
         snap.disabled = false;
       }).catch(() => {
         if (!video.isConnected) {
           return; // the user switched to a note before the camera answered
         }
-        video.hidden = true;
-        video.closest(".cam").classList.add("off");
-        $("#pcam-hint", d).classList.add("notice");
-        $("#pcam-hint", d).textContent = "Vow can't open a camera here. Write a note instead, or allow camera access and try again.";
-        snap.closest(".row").hidden = true;
-        submit.hidden = true;
-        $("#pnote-alt", d).classList.remove("ghost");
-        $("#pnote-alt", d).classList.add("primary");
+        cameraState(false);
       });
+      retry.addEventListener("click", () => {
+        retry.disabled = true;
+        openCamera().finally(() => {
+          retry.disabled = false;
+        });
+      });
+      openCamera();
       snap.addEventListener("click", () => {
         if (!video.videoWidth) {
           return;
@@ -3067,7 +3191,7 @@ async function act(kind, v) {
       walkAway(v);
       return;
     }
-    const val = await ask({ title: "Delete this vow?", body: "Deleting waits 24 hours, and any deadline before then still counts. Debts you already owe stay.", label: "Type DELETE to confirm", ok: "Schedule delete" });
+    const val = await ask({ title: "Delete this vow?", body: "Deleting waits 24 hours, and any deadline before then still counts. Debts you already owe stay.", label: "Type DELETE to confirm", ok: "Schedule delete", destructive: true });
     if (val === null) {
       return;
     }
@@ -3277,7 +3401,7 @@ function wireSettings() {
     }
   });
   $("#erase").addEventListener("click", async () => {
-    const val = await ask({ title: "Erase everything?", body: "This removes your vows and history from this device. Unpaid debts stay until you pay them, and vows you witness for friends keep working.", label: "Type ERASE to confirm", ok: "Erase" });
+    const val = await ask({ title: "Erase everything?", body: "This removes your vows and history from this device. Unpaid debts stay until you pay them, and vows you witness for friends keep working.", label: "Type ERASE to confirm", ok: "Erase", destructive: true });
     if (val && val.trim().toUpperCase() === "ERASE") {
       const unpaid = S.debts.filter((d) => !d.paidAt);
       S = blankState();

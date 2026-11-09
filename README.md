@@ -9,7 +9,7 @@ Live: https://juw12.github.io/vow/
 ## What it does
 - Once or repeating vows (days of the week, 1 week / 30 days / 66 days / no end).
 - Proof by photo (taken live with the camera inside Vow - no gallery uploads - and time-stamped), written note,
-  focus timer, or your witness's word. No camera? A photo vow can take a written note instead, and the record says so.
+  focus timer, or your witness's word. No camera? A photo vow can take a written note instead (or retry the camera), and the record says so.
 - **Solo or witnessed.** Leave the witness empty for a solo vow that runs on your word; add a witness later from the card.
 - **Change proof type** after sealing; like every easing change it waits 24 hours.
 - **Witnesses hold the key.** Send your witness an invite link. When they open it in Vow, their device creates a
