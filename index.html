@@ -531,6 +531,15 @@ details.more-info[open] > summary::after { transform: translateY(2px) rotate(-13
   margin: 0; padding: 10px 12px; border-left: 3px solid var(--warn); border-radius: 8px;
   background: var(--soft); color: var(--ink);
 }
+
+/* r5.2: owe heading, month labels */
+.owed-h { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.heat-months { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; max-width: 420px; font-size: 11.5px; color: var(--muted); margin-bottom: -6px; }
+.heat-months span { white-space: nowrap; }
+.sw.today { background: transparent; border: 2px solid var(--ink); }
+
+/* v10: witness debts */
+.wdebt { border-top: 1px dashed var(--line); }
 </style>
 </head>
 <body>
@@ -689,6 +698,9 @@ function applyPending(v, p) {
     }
   } else if (p.type === "push" && open) {
     open.due = p.value;
+  } else if (p.type === "proof") {
+    v.proof = p.value;
+    v.timerMin = v.timerMin || 25;
   } else if (p.type === "delete") {
     v.status = "deleted";
     if (open) {
@@ -736,8 +748,16 @@ function tick() {
         v.occ.push(o);
         changed = true;
       }
-      if (o.due + (o.claim ? DAY : 0) > t) {
+      if (o.due + (o.claim || o.passAsked ? DAY : 0) > t) {
         break;
+      }
+      if (o.claim && v.autoAccept) {
+        // The witness had 24 h after the deadline and stayed silent: the proof counts.
+        o.status = "kept";
+        o.resolvedAt = o.due + DAY;
+        o.proof = { ...o.claim, unconfirmed: true };
+        changed = true;
+        continue;
       }
       o.status = "broken";
       o.resolvedAt = o.due;
@@ -1270,7 +1290,7 @@ function owedBanner() {
   }
   const total = unpaid.reduce((a, d) => a + d.amount, 0);
   return `<section class="owed-note" id="owed" aria-labelledby="owed-h">
-    <h2 class="eyebrow" id="owed-h">You owe <span class="owed-amt">${money(total)}</span></h2>
+    <h2 class="owed-h" id="owed-h">You owe <span class="owed-amt">${money(total)}</span></h2>
     <ul class="list">${unpaid.map((d) => `<li>
       <div style="flex:1"><b>${money(d.amount)}</b> to ${esc(d.to)}<br><span class="small muted">for "${esc(d.title)}"<br><span class="nw">${fmtWhen(d.at)}</span>${d.askedAt ? ` <span class="nw">· asked ${esc(debtWitness(d).who)} to confirm</span>` : ""}</span></div>
       <button class="btn" data-pay="${d.id}">I paid</button></li>`).join("")}</ul>
@@ -1284,6 +1304,7 @@ function vowCard(v, lead = false) {
   const pending = (v.pending || []).map((p) => {
     const what = p.type === "lower" ? `Stake drops to ${money(p.value)}`
       : p.type === "push" ? `Deadline moves to ${fmtWhen(p.value)}`
+      : p.type === "proof" ? `Proof changes to ${proofLabel[p.value]}`
       : p.cost === "debt" ? "Vow will be deleted — you owe the stake"
       : p.cost === "witness" ? "Vow will be deleted — witness signed off"
       : "Vow will be deleted";
@@ -1291,7 +1312,7 @@ function vowCard(v, lead = false) {
       <button class="btn ghost" data-undo="${v.id}:${p.id}">Cancel change</button></div>`;
   }).join("");
   const notOpen = o && o.opens > t;
-  const witnessInfo = !v.witness ? `<span class="muted">None</span>`
+  const witnessInfo = !v.witness ? `<span class="muted">Solo</span> <button class="pill" data-act="witness" data-id="${v.id}">Add a witness</button>`
     : v.witnessPub ? `${esc(v.witness)} <span class="ok">Accepted</span>`
     : v.sentAt ? `<button class="pill warn" data-act="witness" data-id="${v.id}">Waiting for ${esc(v.witness)}</button>`
     : `<button class="pill warn" data-act="witness" data-id="${v.id}">Send invite to ${esc(v.witness)}</button>`;
@@ -1317,11 +1338,12 @@ function vowCard(v, lead = false) {
     ${pending}
     ${v.bailoutAsked && !v.bailoutSignedAt && !(v.pending || []).some((p) => p.type === "delete")
       ? `<div class="pending row"><span>Walk-away: waiting for ${esc(v.witness)} to sign off</span><span class="spacer"></span><button class="btn ghost" data-wa-resend="${v.id}">Resend</button><button class="btn ghost" data-wa-cancel="${v.id}">Cancel</button></div>` : ""}
+    ${o && o.passAsked ? `<div class="pending row"><span>Pass: waiting for ${esc(v.witness)} to approve</span><span class="spacer"></span><button class="btn ghost" data-pass-resend="${v.id}">Resend</button><button class="btn ghost" data-pass-cancel="${v.id}">Cancel</button></div>` : ""}
     ${freeEdit(v) ? `<p class="small muted row" style="margin:0"><span>Typo? You can fix the wording for <b data-left="${v.createdAt + FREE_EDIT}">${fmtLeft(v.createdAt + FREE_EDIT - t)}</b>.</span> <button class="btn ghost" data-act="reword" data-id="${v.id}">Fix wording</button></p>` : ""}
     <div class="vc-foot">
     ${o ? `<div class="vc-actions">
       ${o.claim
-        ? `<span class="pill warn">Waiting for ${esc(v.witness)} to confirm</span>`
+        ? `<span class="pill warn">Waiting for ${esc(v.witness)} to confirm${v.autoAccept ? " · counts after 24 h" : ""}</span>`
         : `<button class="btn ${lead ? "primary" : "secondary"} vc-check" data-checkin="${v.id}" ${notOpen ? "disabled" : ""}>Check in</button>`}
     </div>` : ""}
     <details class="more"><summary>More options</summary>
@@ -1330,9 +1352,10 @@ function vowCard(v, lead = false) {
         <button class="menu-item" data-act="raise" data-id="${v.id}">Raise stake</button>
         <button class="menu-item" data-act="lower" data-id="${v.id}">Lower stake</button>
         ${v.kind === "once" ? `<button class="menu-item" data-act="push" data-id="${v.id}">Push deadline</button>` : ""}
-        <button class="menu-item" data-act="pass" data-id="${v.id}">Use a life-happens pass <span class="menu-note">1 per 30 days</span></button>
+        <button class="menu-item" data-act="proof" data-id="${v.id}">Change proof type</button>
+        <button class="menu-item" data-act="pass" data-id="${v.id}">Use a life-happens pass <span class="menu-note">${v.witnessPub ? `${esc(v.witness)} approves` : "1 per 30 days"}</span></button>
         <p class="menu-label">Share</p>
-        <button class="menu-item" data-act="witness" data-id="${v.id}">Send to witness</button>
+        <button class="menu-item" data-act="witness" data-id="${v.id}">${v.witness ? "Send to witness" : "Add a witness"}</button>
         <button class="menu-item" data-act="ics" data-id="${v.id}">Add to calendar</button>
         <button class="menu-item danger" data-act="delete" data-id="${v.id}">Delete vow</button>
       </div>
@@ -1439,11 +1462,21 @@ function viewNew() {
       <input type="text" id="f-title" maxlength="80" placeholder="go to the gym for 45 minutes" required autocomplete="off"></label>
     <div class="chips ideas" aria-label="Ideas">${ideas.map((i) => `<button type="button" data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>
     <label class="field"><span class="step-label"><span class="step-n">2</span>Witness</span>
-      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" required aria-describedby="f-witness-hint">
-      <span class="hint" id="f-witness-hint">They accept on their phone. Only they can confirm your proof.</span></label>
+      <input type="text" id="f-witness" maxlength="40" placeholder="A friend who will ask you about it" aria-describedby="f-witness-hint">
+      <span class="hint" id="f-witness-hint">They accept on their phone and confirm your proof. Leave empty to go solo.</span></label>
 
-    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Deadline, stake and proof</span><span id="opts-sum">Tonight · $10 to a charity · Photo proof</span></span><span class="opts-edit">Change</span></summary>
+    <details class="more opts" id="opts"><summary><span class="opts-text"><span class="opts-label"><span class="step-n">3</span>Proof, deadline and stake</span><span id="opts-sum">Photo proof · Tonight · $10 to a charity</span></span><span class="opts-edit">Change</span></summary>
     <div class="stack" style="margin-top:8px">
+    <fieldset><legend class="legend">Proof I'll show</legend>
+      <div class="chips">
+        <label><input type="radio" name="proof" value="photo" checked><span>Photo</span></label>
+        <label><input type="radio" name="proof" value="note"><span>Written note</span></label>
+        <label><input type="radio" name="proof" value="timer"><span>Focus timer</span></label>
+        <label><input type="radio" name="proof" value="witness"><span>Witness code</span></label>
+      </div>
+      <label class="field" id="timer-box" hidden style="margin-top:8px"><span class="small">Minutes of focus</span>
+        <input type="number" id="f-timer" min="1" max="240" value="25"></label>
+    </fieldset>
     <fieldset><legend class="legend">How often</legend>
       <div class="chips">
         <label><input type="radio" name="kind" value="once" checked><span>Once</span></label>
@@ -1485,16 +1518,6 @@ function viewNew() {
       ${["a charity", "my witness", "a cause I dislike"].map((x) => `<button type="button" data-to="${x}">${x}</button>`).join("")}
     </div>
 
-    <fieldset><legend class="legend">Proof I'll show</legend>
-      <div class="chips">
-        <label><input type="radio" name="proof" value="photo" checked><span>Photo</span></label>
-        <label><input type="radio" name="proof" value="note"><span>Written note</span></label>
-        <label><input type="radio" name="proof" value="timer"><span>Focus timer</span></label>
-        <label><input type="radio" name="proof" value="witness"><span>Witness code</span></label>
-      </div>
-      <label class="field" id="timer-box" hidden style="margin-top:8px"><span class="small">Minutes of focus</span>
-        <input type="number" id="f-timer" min="1" max="240" value="25"></label>
-    </fieldset>
     </div>
     </details>
 
@@ -1503,6 +1526,7 @@ function viewNew() {
       <div class="stack">
         <label class="field"><span>When and where exactly?</span>
           <input type="text" id="f-plan" maxlength="120" placeholder="Right after work, at the gym next to the office"></label>
+        <label class="row small"><input type="checkbox" id="f-trust" checked> If my witness hasn't answered 24 h after the deadline, my proof counts</label>
         <label class="row small"><input type="checkbox" id="f-escalate"> Raise the stake ×1.5 each time I miss (max 4×)</label>
       </div>
     </details>
@@ -1519,13 +1543,13 @@ function viewNew() {
         <div><dt>Stake</dt><dd id="pv-stake">$10</dd></div>
         <div><dt>If missed, pay</dt><dd id="pv-to">a charity</dd></div>
         <div><dt>Proof</dt><dd id="pv-proof">Photo</dd></div>
-        <div><dt>Witness</dt><dd id="pv-witness"><span class="pv-blank">Not named yet</span></dd></div>
+        <div><dt>Witness</dt><dd id="pv-witness"><span class="pv-blank">Solo, none named</span></dd></div>
       </dl>
     </section>
     <section class="stack note-card">
       <h2 class="eyebrow">What happens next</h2>
       <ol class="steps">
-        <li><b>Your witness accepts.</b> They get a link and confirm on their phone.</li>
+        <li><b>Your witness accepts.</b> They get a link and confirm on their phone. Solo vows skip this.</li>
         <li><b>Show proof before the deadline.</b> Nothing else happens. The stake stays yours.</li>
         <li><b>Miss it and you owe the stake.</b> You pay the cause yourself and log the receipt.</li>
       </ol>
@@ -1557,9 +1581,20 @@ function heatmap() {
     const k = dateKey(d.getTime());
     cells.push(`<span class="${byDay[k] || ""} ${k === dateKey(today.getTime()) ? "today" : ""}" title="${k}${byDay[k] ? ": " + byDay[k] : ""}"></span>`);
   }
+  const months = [];
+  for (let w = 0; w < 12; w++) {
+    const first = new Date(start);
+    first.setDate(first.getDate() + w * 7);
+    const last = new Date(first);
+    last.setDate(last.getDate() + 6);
+    const startsMonth = w > 0 && last.getDate() <= 7;
+    const label = w === 0 && first.getDate() <= 21 ? first : startsMonth ? last : null;
+    months.push(`<span>${label ? label.toLocaleDateString(undefined, { month: "short" }) : ""}</span>`);
+  }
   return `<section class="card stack"><h2>Last 12 weeks</h2>
+    <div class="heat-months" aria-hidden="true">${months.join("")}</div>
     <div class="heat" role="img" aria-label="Calendar of kept, broken and excused days over the last 12 weeks">${cells.join("")}</div>
-    <ul class="legend-row small muted" aria-hidden="true"><li><i class="sw kept"></i>Kept</li><li><i class="sw broken"></i>Broken</li><li><i class="sw excused"></i>Excused</li><li><i class="sw"></i>No vow</li></ul></section>`;
+    <ul class="legend-row small muted" aria-hidden="true"><li><i class="sw kept"></i>Kept</li><li><i class="sw broken"></i>Broken</li><li><i class="sw excused"></i>Excused</li><li><i class="sw"></i>No vow</li><li><i class="sw today"></i>Today</li></ul></section>`;
 }
 
 function viewHistory() {
@@ -1591,7 +1626,7 @@ function viewHistory() {
       ${items.length ? `<ul class="list">${items.map(({ v, o }) => `<li>
         ${o.proof && o.proof.photo ? `<img class="thumb" src="${o.proof.photo}" alt="Proof photo for ${esc(v.title)}">` : ""}
         <div style="flex:1;min-width:0"><b>${esc(v.title)}</b> <span class="pill ${o.status}">${label[o.status]}</span><br>
-          <span class="small muted">${fmtWhen(o.resolvedAt || o.due)} · ${money(o.stake)}${o.proof && o.proof.text ? ` · "${esc(o.proof.text)}"` : ""}${o.reason ? ` · ${esc(o.reason)}` : ""}</span></div></li>`).join("")}</ul>`
+          <span class="small muted">${fmtWhen(o.resolvedAt || o.due)} · ${money(o.stake)}${o.proof && o.proof.unconfirmed ? " · witness didn't answer" : ""}${o.proof && o.proof.instead ? " · note instead of photo" : ""}${o.excusedBy === "witness" ? ` · approved by ${esc(v.witness)}` : ""}${o.proof && o.proof.text ? ` · "${esc(o.proof.text)}"` : ""}${o.reason ? ` · ${esc(o.reason)}` : ""}</span></div></li>`).join("")}</ul>`
         : `<p class="muted">Nothing yet. Kept and broken vows show up here.</p>`}
     </section>
     ${S.debts.length ? `<section class="card stack"><h2>Payments</h2><ul class="list">${S.debts.slice().reverse().map((d) => `<li><div style="flex:1">
@@ -1632,11 +1667,11 @@ function viewSettings() {
     <section class="set-row" aria-labelledby="set-how">
       <div class="set-head"><h2 id="set-how">How Vow works</h2><p class="small muted">Free, no subscription. Runs offline once loaded.</p></div>
       <div class="card stack about">
-        <p>You make a vow, put a stake on it and name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
+        <p>You make a vow, put a stake on it and, if you like, name a witness. Show proof before the deadline and nothing happens. Miss it, and the stake becomes a debt you pay yourself, in full, to the cause you chose.</p>
         <details class="more-info"><summary>Money, witnesses and privacy</summary>
         <p><b>Vow never touches your money.</b> It can't charge your card, and it takes no cut. That means your witness is what makes it real: tell them about every vow.</p>
-        <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are only claims: a check-in counts when your witness signs it. Before they accept, proof is on your honor.</p>
-        <p><b>Debts need proof.</b> A debt only clears with a receipt image or your witness's signed confirmation, and photo check-ins must be taken live with the camera, not picked from the gallery.</p>
+        <p><b>Witnesses hold the key.</b> When your witness accepts, their phone creates a private signing key that never leaves it. From then on, your photos, notes and timers are claims: a check-in counts when your witness signs it, or, if you chose it, when they stay silent for 24 hours after the deadline. Passes need their approval too. Solo vows, and vows whose witness hasn't accepted, run on your honor.</p>
+        <p><b>Debts need proof.</b> A debt only clears with a receipt image or your witness's signed confirmation, and photo check-ins must be taken live with the camera, not picked from the gallery. When a camera won't do, you can write a note instead, and the record says so.</p>
         <p><b>Private by design.</b> No account, no server, no tracking. Proof photos never leave this device.</p>
         </details>
       </div>
@@ -1690,6 +1725,75 @@ function viewBail(p) {
     <p class="small muted"><a href="#">Open Vow</a></p>
   </section>`;
 }
+function viewOwe(p) {
+  const who = p.n || "Your friend";
+  const mine = loadWitnessing().find((w) => w.id === p.id);
+  const tracked = mine && (mine.debts || []).some((x) => x.id === p.debt);
+  return `<div class="hero"><h1>Missed vow</h1></div>
+  <section class="card stack">
+    <p><b>${esc(who)}</b> missed <b>${esc(p.t)}</b>. They owe <b>${esc(p.s)}</b> to ${esc(p.to)}.</p>
+    <p>Keep track of it here. When you see them pay, confirm it from your list and the debt clears on their phone.</p>
+    ${!mine ? `<p class="pill warn">You aren't the witness for this vow.</p>`
+      : tracked ? `<p class="pill kept">Tracked in your list</p>`
+      : `<button class="btn primary block" id="o-track">Keep track of this debt</button>`}
+    <p class="small muted"><a href="#">Open Vow</a></p>
+  </section>`;
+}
+function viewPassReq(p) {
+  const who = p.n || "Your friend";
+  const mine = loadWitnessing().find((w) => w.id === p.id);
+  return `<div class="hero"><h1>Pass request</h1></div>
+  <section class="card stack">
+    <p><b>${esc(who)}</b> asks you to excuse <b>${esc(p.t)}</b> for ${esc(p.day)}${p.why ? `: \u201c${esc(p.why)}\u201d` : ""}.</p>
+    <p>If you approve, this check-in is excused and they won't owe the <b>${esc(p.s)}</b> stake. They get one pass per 30 days.</p>
+    ${mine
+      ? `<button class="btn primary block" id="x-allow">Approve the pass</button>`
+      : `<p class="pill warn">You aren't the witness for this vow, so you can't approve a pass.</p>`}
+    <div class="stack">
+      <textarea class="share-link" id="x-link" aria-label="Pass approval link" readonly hidden></textarea>
+      <div id="x-qr"></div>
+      <button class="btn block" id="x-send" hidden>Send approval back</button>
+    </div>
+    <p class="small muted"><a href="#">Open Vow</a></p>
+  </section>`;
+}
+function markWitnessDebtPaid(vowId, debtId) {
+  const list = loadWitnessing();
+  const w = list.find((x) => x.id === vowId);
+  const d = w && (w.debts || []).find((x) => x.id === debtId);
+  if (d) {
+    d.paid = true;
+    d.paidAt = now();
+    saveWitnessing(list);
+  }
+}
+async function witnessConfirmPaid(key) {
+  const [vowId, debtId] = key.split(":");
+  const w = loadWitnessing().find((x) => x.id === vowId);
+  const d = w && (w.debts || []).find((x) => x.id === debtId);
+  if (!d) {
+    return;
+  }
+  openDialog(`<form class="stack" id="wpf">
+    <h2 id="dlg-title">Confirm the payment</h2>
+    <p class="muted small">Only confirm if you've seen ${esc(w.n || "them")} pay ${esc(d.s)} to ${esc(d.to)}: the transfer, a receipt, or the payment itself.</p>
+    <div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary">I saw them pay, sign</button></div>
+    <textarea class="share-link" id="wpf-link" aria-label="Payment confirmation link" readonly hidden></textarea>
+    <div id="wpf-qr"></div>
+  </form>`, (dd) => {
+    $("#wpf", dd).addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const sig = await signProof(w.priv, vowId, `paid:${debtId}`);
+      const link = appUrl(`paidok=${b64e(JSON.stringify({ id: vowId, debt: debtId, sig }))}`);
+      markWitnessDebtPaid(vowId, debtId);
+      const box = $("#wpf-link", dd);
+      box.value = link;
+      box.hidden = false;
+      $("#wpf-qr", dd).innerHTML = qrBlock(link, "Payment confirmation link");
+      shareText(`I saw you pay for "${d.t}". Open this to clear the debt: ${link}`);
+    });
+  });
+}
 function viewPaid(p) {
   const who = p.n || "Your friend";
   const mine = loadWitnessing().find((w) => w.id === p.id);
@@ -1715,7 +1819,9 @@ function witnessSection() {
   }
   return `<section class="card stack" aria-labelledby="wit-h"><h2 id="wit-h">You're a witness for</h2>
     <ul class="list">${list.map((w) => `<li><div style="flex:1"><b>${esc(w.n || "A friend")}</b>: ${esc(w.t)}<br><span class="small muted">${esc(witnessSchedule(w))} · ${esc(w.s)} to ${esc(w.to)}</span></div>
-      <button class="btn" data-confirm="${w.id}">Confirm proof</button></li>`).join("")}</ul></section>`;
+      <button class="btn" data-confirm="${w.id}">Confirm proof</button></li>
+      ${(w.debts || []).filter((d) => !d.paid).map((d) => `<li class="wdebt"><div style="flex:1"><b>${esc(w.n || "They")} owe ${esc(d.s)}</b> to ${esc(d.to)}<br><span class="small muted">missed "${esc(d.t)}" · ${fmtWhen(d.at)} · unpaid</span></div>
+        <button class="btn" data-wpaid="${w.id}:${d.id}">Confirm they paid</button></li>`).join("")}`).join("")}</ul></section>`;
 }
 async function confirmProof(id) {
   const w = loadWitnessing().find((x) => x.id === id);
@@ -1757,7 +1863,13 @@ function route() {
   if (h.startsWith("#paid=")) {
     return "paid";
   }
-  if (h.startsWith("#accept=") || h.startsWith("#ok=") || h.startsWith("#bailok=") || h.startsWith("#paidok=")) {
+  if (h.startsWith("#owe=")) {
+    return "owe";
+  }
+  if (h.startsWith("#passreq=")) {
+    return "passreq";
+  }
+  if (h.startsWith("#accept=") || h.startsWith("#ok=") || h.startsWith("#bailok=") || h.startsWith("#paidok=") || h.startsWith("#passok=")) {
     return "inbound";
   }
   return { "#new": "new", "#history": "history", "#settings": "settings" }[h] || "home";
@@ -1780,7 +1892,7 @@ function render() {
       a.removeAttribute("aria-current");
     }
   });
-  if (r === "invite" || r === "inbound" || r === "bail" || r === "paid") {
+  if (r === "invite" || r === "inbound" || r === "bail" || r === "paid" || r === "owe" || r === "passreq") {
     let payload;
     try {
       payload = JSON.parse(b64d(location.hash.slice(location.hash.indexOf("=") + 1)));
@@ -1791,7 +1903,7 @@ function render() {
     if (r === "inbound") {
       view.innerHTML = `<div class="hero"><h1>Checking…</h1></div>`;
       const h = location.hash;
-      handleInbound(h.startsWith("#accept=") ? "accept" : h.startsWith("#bailok=") ? "bailok" : h.startsWith("#paidok=") ? "paidok" : "ok", payload);
+      handleInbound(h.startsWith("#accept=") ? "accept" : h.startsWith("#bailok=") ? "bailok" : h.startsWith("#paidok=") ? "paidok" : h.startsWith("#passok=") ? "passok" : "ok", payload);
       return;
     }
     if (r === "paid") {
@@ -1805,6 +1917,7 @@ function render() {
           }
           const sig = await signProof(w.priv, payload.id, `paid:${payload.debt}`);
           const link = appUrl(`paidok=${b64e(JSON.stringify({ id: payload.id, debt: payload.debt, sig }))}`);
+          markWitnessDebtPaid(payload.id, payload.debt);
           const box = $("#p-link");
           box.value = link;
           box.hidden = false;
@@ -1813,6 +1926,48 @@ function render() {
           send.hidden = false;
           send.addEventListener("click", () => shareText(`I saw you pay for "${payload.t}". Open this to clear the debt: ${link}`));
           toast("Signed. Send the confirmation back.");
+        });
+      }
+      return;
+    }
+    if (r === "owe") {
+      view.innerHTML = viewOwe(payload);
+      const track = $("#o-track");
+      if (track) {
+        track.addEventListener("click", () => {
+          const list = loadWitnessing();
+          const w = list.find((x) => x.id === payload.id);
+          if (!w) {
+            return;
+          }
+          w.debts = (w.debts || []).filter((x) => x.id !== payload.debt);
+          w.debts.push({ id: payload.debt, s: payload.s, to: payload.to, t: payload.t, at: payload.at || now(), paid: false });
+          saveWitnessing(list);
+          render();
+          toast("Tracked. It shows under \u201cYou're a witness for\u201d until they pay.");
+        });
+      }
+      return;
+    }
+    if (r === "passreq") {
+      view.innerHTML = viewPassReq(payload);
+      const allow = $("#x-allow");
+      if (allow) {
+        allow.addEventListener("click", async () => {
+          const w = loadWitnessing().find((x) => x.id === payload.id);
+          if (!w) {
+            return;
+          }
+          const sig = await signProof(w.priv, payload.id, `pass:${payload.occ}`);
+          const link = appUrl(`passok=${b64e(JSON.stringify({ id: payload.id, occ: payload.occ, sig }))}`);
+          const box = $("#x-link");
+          box.value = link;
+          box.hidden = false;
+          $("#x-qr").innerHTML = qrBlock(link, "Pass approval link");
+          const send = $("#x-send");
+          send.hidden = false;
+          send.addEventListener("click", () => shareText(`I approved your pass for "${payload.t}". Open this: ${link}`));
+          toast("Signed. Send the approval back.");
         });
       }
       return;
@@ -1930,6 +2085,28 @@ async function handleInbound(kind, p) {
     done(`Your witness let you off. "${v.title}" will be deleted in 24 hours.`);
     return;
   }
+  if (kind === "passok") {
+    const signedPass = await verifyProof(v.witnessPub, v.id, `pass:${p.occ}`, p.sig);
+    if (!signedPass) {
+      done("That pass approval isn't signed by your witness.");
+      return;
+    }
+    const target = v.occ.find((x) => x.id === p.occ);
+    if (!target || target.status !== "open") {
+      done("Approved, but that check-in is already settled.");
+      return;
+    }
+    target.status = "excused";
+    target.resolvedAt = now();
+    target.reason = (target.passAsked && target.passAsked.why) || "excused by witness";
+    target.excusedBy = "witness";
+    delete target.passAsked;
+    S.passes.push({ at: now(), vowId: v.id, signed: true });
+    save();
+    tick();
+    done(`Excused. ${v.witness || "Your witness"} approved your pass.`);
+    return;
+  }
   const ok = await verifyProof(v.witnessPub, v.id, p.d, p.sig);
   const o = openOcc(v);
   if (!ok) {
@@ -1964,7 +2141,7 @@ function wireNew() {
       ? (f.when.value === "custom" ? "custom deadline" : $(`input[name=when][value="${f.when.value}"]`, f).nextElementSibling.textContent)
       : "repeats";
     const stakeText = f.stake.value === "custom" ? money(Number($("#f-stake").value) || 0) : money(Number(f.stake.value));
-    $("#opts-sum").textContent = `${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"} · ${proofLabel[f.proof.value]} proof`;
+    $("#opts-sum").textContent = `${proofLabel[f.proof.value]} proof · ${whenText} · ${stakeText} to ${$("#f-to").value || "a charity"}`;
     const titleText = $("#f-title").value.trim();
     const witnessText = $("#f-witness").value.trim();
     const blank = (s) => `<span class="pv-blank">${s}</span>`;
@@ -1973,7 +2150,7 @@ function wireNew() {
     $("#pv-stake").textContent = stakeText;
     $("#pv-to").textContent = $("#f-to").value || "a charity";
     $("#pv-proof").textContent = proofLabel[f.proof.value];
-    $("#pv-witness").innerHTML = witnessText ? esc(witnessText) : blank("Not named yet");
+    $("#pv-witness").innerHTML = witnessText ? esc(witnessText) : blank("Solo, none named");
   };
   f.addEventListener("input", sync);
   f.addEventListener("change", (e) => {
@@ -2005,8 +2182,8 @@ function createVow(f) {
     $("#f-title").focus();
     return;
   }
-  if (!$("#f-witness").value.trim()) {
-    toast("Name a witness. A vow nobody knows about is easy to break.");
+  if (!$("#f-witness").value.trim() && f.proof.value === "witness") {
+    toast("Witness code proof needs a witness. Name one, or pick another proof.");
     $("#f-witness").focus();
     return;
   }
@@ -2017,7 +2194,7 @@ function createVow(f) {
     id: uid(), title, kind, createdAt: t, status: "active", stake, baseStake: stake,
     escalate: $("#f-escalate").checked, to: $("#f-to").value.trim() || "a charity",
     proof: f.proof.value, timerMin: Math.max(1, Number($("#f-timer").value) || 25),
-    witness: $("#f-witness").value.trim(), plan: $("#f-plan").value.trim(),
+    witness: $("#f-witness").value.trim(), plan: $("#f-plan").value.trim(), autoAccept: $("#f-trust").checked,
     sentAt: null, witnessPub: null, pending: [], occ: [],
   };
   if (kind === "once") {
@@ -2043,7 +2220,11 @@ function createVow(f) {
   location.hash = "";
   tick();
   render();
-  setTimeout(() => offerWitness(v, true), 650);
+  if (v.witness) {
+    setTimeout(() => offerWitness(v, true), 650);
+  } else {
+    toast("Sealed. Solo vow: your check-ins count on your word.");
+  }
 }
 
 function offerWitness(v, fresh) {
@@ -2077,7 +2258,8 @@ function tellWitness(title, v, msg) {
 }
 
 function confess(list) {
-  const msgs = list.map(({ v, debt }) => `I broke my vow: "${v.title}". I owe ${money(debt.amount)} to ${debt.to}. Hold me to paying it.`);
+  const oweLink = (v, debt) => appUrl(`owe=${b64e(JSON.stringify({ id: v.id, debt: debt.id, n: S.settings.name || "", t: v.title, s: money(debt.amount), to: debt.to, at: debt.at }))}`);
+  const msgs = list.map(({ v, debt }) => `I broke my vow: "${v.title}". I owe ${money(debt.amount)} to ${debt.to}. Hold me to paying it.${v.witnessPub ? ` Track it in Vow: ${oweLink(v, debt)}` : ""}`);
   openDialog(`<div class="stack">
     <h2 id="dlg-title">Vow broken</h2>
     ${list.map(({ v, debt }) => `<p><b>"${esc(v.title)}"</b> passed its deadline without proof. You owe <b>${money(debt.amount)}</b> to ${esc(debt.to)}.</p>`).join("")}
@@ -2145,7 +2327,7 @@ function keep(v, o, proof) {
     render();
     const msg = `Proof for "${v.title}" (${dateKey(o.due)}): ${proof.text || "photo attached in Vow"}. Please confirm in Vow if it's real.`;
     tellWitness(`Sent to ${v.witness} for confirmation`, v, msg);
-    toast(`${v.witness} has 24 h after the deadline to confirm.`);
+    toast(v.autoAccept ? `${v.witness} has 24 h after the deadline to confirm. If they stay silent, it counts.` : `${v.witness} has 24 h after the deadline to confirm.`);
     return;
   }
   o.status = "kept";
@@ -2166,12 +2348,12 @@ function checkIn(v) {
   if (!o) {
     return;
   }
-  const head = `<h2 id="dlg-title">Check in</h2><p class="muted small">"${esc(v.title)}"${v.witnessPub && v.proof !== "witness" ? ` · ${esc(v.witness)} confirms this before it counts` : ""}</p>`;
+  const head = `<h2 id="dlg-title">Check in</h2><p class="muted small">"${esc(v.title)}"${v.witnessPub && v.proof !== "witness" ? (v.autoAccept ? ` · ${esc(v.witness)} confirms, or it counts 24 h after the deadline` : ` · ${esc(v.witness)} confirms this before it counts`) : ""}</p>`;
   const foot = (label) => `<div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary" id="ok">${label}</button></div>`;
-  if (v.proof === "note") {
+  const noteCheckIn = (instead) => {
     openDialog(`<form class="stack" id="pf">${head}
       <label class="field"><span>What exactly did you do?</span><textarea id="pnote" minlength="15" required placeholder="Ran 5.2 km along the coast, 31 minutes"></textarea></label>
-      <p class="hint">At least 15 characters. Be specific, your witness may ask.</p>${foot("Submit proof")}</form>`, (d) => {
+      <p class="hint">At least 15 characters. Be specific, your witness may ask.${instead ? " Your record shows this was a note, not a photo." : ""}</p>${foot("Submit proof")}</form>`, (d) => {
       $("#pf", d).addEventListener("submit", (e) => {
         e.preventDefault();
         const text = $("#pnote", d).value.trim();
@@ -2179,16 +2361,24 @@ function checkIn(v) {
           toast("Add a bit more detail (15+ characters).");
           return;
         }
-        keep(v, o, { type: "note", text, at: now() });
+        const proof = { type: "note", text, at: now() };
+        if (instead) {
+          proof.instead = instead;
+        }
+        keep(v, o, proof);
       });
     });
+  };
+  if (v.proof === "note") {
+    noteCheckIn(null);
   } else if (v.proof === "photo") {
     openDialog(`<form class="stack" id="pf">${head}
       <div class="cam"><video id="pvideo" playsinline muted aria-label="Camera preview"></video>
         <img id="pprev" alt="Photo you took" hidden></div>
-      <p class="hint" id="pcam-hint">Point your camera at it and take the photo now. Only a live shot counts, not a picture from your gallery. It's stamped with the time and stays on this device.</p>
+      <p class="hint" id="pcam-hint">Take a live photo now (gallery pictures don't count). It's time-stamped, stays on this device, and unlocks Submit.</p>
       <div class="row"><button type="button" class="btn block" id="psnap" disabled>Take photo</button>
-        <button type="button" class="btn ghost" id="pretake" hidden>Retake</button></div>${foot("Submit proof")}</form>`, (d) => {
+        <button type="button" class="btn ghost" id="pretake" hidden>Retake</button></div>
+      <button type="button" class="btn ghost block" id="pnote-alt">Write a note instead</button>${foot("Submit proof")}</form>`, (d) => {
       let data = null;
       let stream = null;
       const video = $("#pvideo", d);
@@ -2198,14 +2388,25 @@ function checkIn(v) {
       const submit = $("#ok", d);
       submit.disabled = true;
       dlg.addEventListener("close", () => stopCamera(stream), { once: true });
+      $("#pnote-alt", d).addEventListener("click", () => {
+        stopCamera(stream);
+        noteCheckIn("photo");
+      });
       startCamera(video).then((s) => {
         stream = s;
+        if (!video.isConnected) {
+          stopCamera(s);
+          return;
+        }
         snap.disabled = false;
       }).catch(() => {
+        if (!video.isConnected) {
+          return; // the user switched to a note before the camera answered
+        }
         video.hidden = true;
         video.closest(".cam").classList.add("off");
         $("#pcam-hint", d).classList.add("notice");
-        $("#pcam-hint", d).textContent = "Vow can't open a camera here. Allow camera access, or check in from your phone: photo proof only takes a live camera shot.";
+        $("#pcam-hint", d).textContent = "Vow can't open a camera here. Allow camera access, check in from your phone, or write a note instead.";
       });
       snap.addEventListener("click", () => {
         if (!video.videoWidth) {
@@ -2343,6 +2544,24 @@ function offerBail(v) {
     $("#bmsend", d).addEventListener("click", () => shareText(`I want to walk away from "${v.title}" before the deadline. Please sign off: ${bailLink(v)}`));
   });
 }
+function passPayload(v, o) {
+  return { id: v.id, occ: o.id, n: S.settings.name || "", t: v.title, day: dateKey(o.due), why: (o.passAsked && o.passAsked.why) || "", s: money(o.stake), to: v.to };
+}
+function passLink(v, o) {
+  return appUrl(`passreq=${b64e(JSON.stringify(passPayload(v, o)))}`);
+}
+function offerPass(v, o) {
+  const link = passLink(v, o);
+  openDialog(`<div class="stack">
+    <h2 id="dlg-title">Ask ${esc(v.witness)} to approve your pass</h2>
+    <p class="muted small">Only ${esc(v.witness)} can excuse this check-in. The deadline still stands, with 24 hours extra for their answer.</p>
+    <textarea class="share-link" aria-label="Pass request link" readonly>${esc(link)}</textarea>
+    ${qrBlock(link, "Pass request link")}
+    <div class="row"><button class="btn ghost" data-close>Not now</button><span class="spacer"></span><button class="btn primary" id="psend">Send request</button></div>
+  </div>`, (d) => {
+    $("#psend", d).addEventListener("click", () => shareText(`Life happened: ${(o.passAsked && o.passAsked.why) || ""}. Can you excuse "${v.title}" for ${dateKey(o.due)}? ${link}`));
+  });
+}
 function walkAway(v) {
   const canAsk = !!v.witnessPub;
   openDialog(`<form class="stack" id="wf">
@@ -2465,12 +2684,21 @@ async function act(kind, v) {
       toast("Passes only work before the deadline.");
       return;
     }
-    const val = await ask({ title: "Life happens pass", body: "One per 30 days, only before the deadline. This check-in is excused and your witness should know why.", label: "What happened?", ok: "Use my pass" });
+    const val = await ask({ title: "Life happens pass", body: v.witnessPub
+      ? `One per 30 days, only before the deadline. ${v.witness} has to approve it. Until they do, the deadline still stands (with 24 h extra for their answer).`
+      : "One per 30 days, only before the deadline. This check-in is excused and your witness should know why.", label: "What happened?", ok: v.witnessPub ? `Ask ${v.witness}` : "Use my pass" });
     if (val === null) {
       return;
     }
     if (val.trim().length < 5) {
       toast("Say what happened (5+ characters).");
+      return;
+    }
+    if (v.witnessPub) {
+      o.passAsked = { at: now(), why: val.trim() };
+      save();
+      render();
+      offerPass(v, o);
       return;
     }
     o.status = "excused";
@@ -2481,6 +2709,35 @@ async function act(kind, v) {
     tick();
     render();
     tellWitness("Pass used", v, `I used my one "life happens" pass this month on "${v.title}": ${o.reason}.`);
+  } else if (kind === "proof") {
+    const pendingProof = (v.pending || []).some((p) => p.type === "proof");
+    if (pendingProof) {
+      toast("A proof change is already scheduled. Cancel it first.");
+      return;
+    }
+    openDialog(`<form class="stack" id="prf">
+      <h2 id="dlg-title">Change proof type</h2>
+      <p class="muted small">This waits 24 hours, like any change that could make the vow easier. Check-ins before then use ${esc(proofLabel[v.proof])}.</p>
+      <fieldset><legend class="legend">New proof</legend><div class="chips">
+        ${Object.keys(proofLabel).map((k) => `<label><input type="radio" name="nproof" value="${k}" ${k === v.proof ? "checked" : ""}><span>${proofLabel[k]}</span></label>`).join("")}
+      </div></fieldset>
+      <div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span><button class="btn primary">Schedule</button></div>
+    </form>`, (d) => {
+      $("#prf", d).addEventListener("submit", (e) => {
+        e.preventDefault();
+        const choice = $("input[name=nproof]:checked", d).value;
+        if (choice === v.proof) {
+          dlg.close();
+          return;
+        }
+        if (choice === "witness" && !v.witness) {
+          toast("Witness code proof needs a witness. Add one first.");
+          return;
+        }
+        dlg.close();
+        schedule(v, "proof", choice);
+      });
+    });
   } else if (kind === "reword") {
     if (!freeEdit(v)) {
       toast("The wording is sealed now.");
@@ -2493,6 +2750,16 @@ async function act(kind, v) {
       render();
     }
   } else if (kind === "witness") {
+    if (!v.witness) {
+      const name = await ask({ title: "Add a witness", body: "They get a link, accept on their phone, and from then on confirm your proof.", label: "Witness name", ok: "Continue" });
+      if (!name || !name.trim()) {
+        return;
+      }
+      v.witness = name.trim().slice(0, 40);
+      v.autoAccept = v.autoAccept !== false;
+      save();
+      render();
+    }
     offerWitness(v, false);
   } else if (kind === "ics") {
     download(`vow-${v.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}.ics`, icsFor(v), "text/calendar");
@@ -2649,6 +2916,23 @@ document.addEventListener("click", (e) => {
       render();
       toast("Walk-away cancelled. The vow stands.");
     }
+  } else if (t.dataset.passResend) {
+    const v = find(t.dataset.passResend);
+    const o = v && openOcc(v);
+    if (o && o.passAsked) {
+      offerPass(v, o);
+    }
+  } else if (t.dataset.passCancel) {
+    const v = find(t.dataset.passCancel);
+    const o = v && openOcc(v);
+    if (o) {
+      delete o.passAsked;
+      save();
+      render();
+      toast("Pass request withdrawn. The deadline stands.");
+    }
+  } else if (t.dataset.wpaid) {
+    witnessConfirmPaid(t.dataset.wpaid);
   } else if (t.dataset.undo) {
     const [vid, pid] = t.dataset.undo.split(":");
     const v = find(vid);
