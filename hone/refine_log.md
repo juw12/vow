@@ -83,3 +83,21 @@ Note: the first r2 gate run and pair run collided with a parallel judge call (ti
 | r4 | r3 + desktop History as one grid (check-ins full height left; calendar and payments right) | not scored | - | rejected on visual check: stretched check-ins card left a blank block (same failure as run 4 r1) |
 | r5 | r3 + "Seal my vow" moved into the "Your vow" summary card (review, then seal) | 8.10 (C1 8, C2 8, C3 8, C4 8, C5 9) | - | not kept; 5-round cap reached, v12 (r2) stays live |
 Open judge asks after run 7 (mostly conflicting between judges): desktop Home side-panel alignment, small TIME LEFT label vs big countdown, beige-on-beige card separation, More options group bands vs eyebrow labels, one focal element on Settings/History.
+
+
+## Run 8 (ui8, rubric ui-v1) - baseline v12 = 8.30, keep needs >= 8.60 and b_wins
+| round | change | council | result |
+|---|---|---|---|
+| r1 | on run-7 r5 (review-then-seal): card shadow + firmer edge, darker TIME LEFT label, menu labels as eyebrows, neutral notice, phone Home gaps | 8.00 | not kept |
+| r2 | r1 + "What happens next" under the form (desktop New vow columns balance), Payments under the calendar (History), check-ins lead on phones, dead camera box collapses into a notice | 7.95 | not kept |
+| r3 | r2 + "Retry camera" in the no-camera check-in state, one outlined secondary button for dialog Cancel/Close | 8.00 | not kept |
+| r4 | r3 + Delete in its own "Remove" group, softer NEXT UP border, "Change" -> "Edit", week strip without card chrome | 8.20 (C1 8, C2 8, C3 8, C4 9, C5 8) | not kept (best of run) |
+| r5 | r4 + History totals as hero, smaller section heads, quieter status colours, more phone Home spacing | 8.00 | not kept; 5-round cap |
+Harness fix: tools/shoot_ui.py now waits up to 3 s for the camera request to settle before the check-in shot (it raced getUserMedia, so shots flipped between the waiting and no-camera states).
+
+## Run 9 (ui9) - from run-8 r4, same bar
+| round | change | council | result |
+|---|---|---|---|
+| r1 | destructive confirms (Schedule delete, Erase) as red outline instead of the primary fill; plain dot markers in "What happens next"; quieter second countdown | 7.95 | not kept |
+Stopped: 9 straight candidates across runs 7-9 scored 7.95-8.20 against a best of 8.30 with about +/-0.3 judge noise, and judges repeatedly asked for changes already on screen (grouped More options, outline delete). The council can no longer tell these candidates apart, so more rounds are noise-chasing. v12 stays live.
+Best unshipped candidate: hone/ui9/r1_app (r4 + destructive/primary split). Contains real UX fixes (no-camera retry, balanced desktop columns, separate danger style) that the council did not reward.
