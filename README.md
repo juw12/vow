@@ -6,6 +6,15 @@ If you miss it, Vow records the debt and you pay your chosen cause yourself, in 
 Built as a free alternative to Forfeit (forfeit.app), which charges a subscription and keeps forfeited stakes.
 Live: https://juw12.github.io/vow/
 
+## Get it on your device
+
+- **Windows:** [`Vow-Windows-Setup.exe`](https://github.com/juw12/vow/releases/download/desktop/Vow-Windows-Setup.exe) (no admin needed; if Windows says it protected your PC, choose *More info → Run anyway*), or without installing [`Vow-Windows-Portable.zip`](https://github.com/juw12/vow/releases/download/desktop/Vow-Windows-Portable.zip).
+- **Mac:** [`Vow-macOS-AppleSilicon.dmg`](https://github.com/juw12/vow/releases/download/desktop/Vow-macOS-AppleSilicon.dmg) (M1 and newer) or [`Vow-macOS-Intel.dmg`](https://github.com/juw12/vow/releases/download/desktop/Vow-macOS-Intel.dmg). The first time, macOS blocks it because it is not notarized: **System Settings → Privacy & Security → Open Anyway**.
+- **Android:** [`Vow-android.apk`](https://github.com/juw12/vow/releases/download/android/Vow-android.apk): open the file on the phone and allow your browser to install apps once.
+- **iPhone:** open https://juw12.github.io/vow/ in Safari, tap Share, then **Add to Home Screen**.
+
+The Windows, Mac and Android apps are the web app in its own window ([`desktop/`](desktop/README.md), [`android/`](android/README.md)) and change with it. Each build is opened on GitHub's machines before it is published: on Windows and on a Mac the page loads, the app starts and can store data; on an Android emulator it installs, opens and stays up. They are not code-signed or notarised, and no real phone or PC has run them yet.
+
 ## What it does
 - Once or repeating vows (days of the week, 1 week / 30 days / 66 days / no end).
 - Proof by photo (taken live with the camera inside Vow - no gallery uploads - and time-stamped), written note,
